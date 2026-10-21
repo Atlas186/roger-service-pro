@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roger Service Pro - Gestion des Employés</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- DESIGN SYSTEM PREMIUM --- */
+        :root {
+            --primary: #4f46e5; 
+            --primary-hover: #4338ca;
+            --secondary: #0f172a; 
+            --secondary-light: #1e293b;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --success-hover: #059669;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --border: #e2e8f0;
+            
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --radius-md: 10px;
+            --radius-lg: 16px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        
+        /* GESTION DE L'ÉCRAN (Empêche le menu de disparaître) */
+        body { 
+            display: flex; 
+            height: 100vh; 
+            width: 100vw;
+            background-color: var(--background); 
+            color: var(--text-main); 
+            overflow: hidden; 
+            -webkit-font-smoothing: antialiased; 
+        }
+        
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 20px; }
+
+        button { cursor: pointer; border: none; outline: none; font-weight: 600; transition: all 0.2s ease; }
+        .btn-icon { background: none; font-size: 1.2rem; color: var(--text-muted); padding: 8px; border-radius: 50%; }
+        .btn-icon:hover { color: var(--primary); background: #eff6ff; }
+        
+        /* --- SIDEBAR PREMIUM (VERROUILLÉE) --- */
+        .sidebar { 
+            width: 250px; 
+            min-width: 250px; 
+            flex-shrink: 0;   
+            background: linear-gradient(180deg, var(--secondary) 0%, var(--secondary-light) 100%); 
+            color: white; 
+            display: flex !important; 
+            flex-direction: column; 
+            padding: 2rem 1.2rem; 
+            z-index: 10; 
+            box-shadow: 4px 0 15px rgba(0,0,0,0.05); 
+            overflow-y: auto; 
+        }
+        .brand h2 { font-size: 1.3rem; font-weight: 800; display: flex; align-items: center; gap: 12px; margin-bottom: 3rem; letter-spacing: -0.5px; }
+        .brand h2 i { color: #818cf8; font-size: 1.5rem; }
+        .nav-links { list-style: none; flex: 1; display: flex; flex-direction: column; gap: 5px; }
+        .nav-links li { padding: 0.9rem 1.2rem; border-radius: var(--radius-md); display: flex; align-items: center; gap: 15px; color: #94a3b8; cursor: pointer; transition: 0.3s; font-weight: 500; font-size: 0.9rem; }
+        .nav-links li i { font-size: 1.1rem; width: 20px; text-align: center; }
+        .nav-links li:hover { background-color: rgba(255,255,255,0.05); color: white; }
+        .nav-links li.active { background-color: var(--primary); color: white; box-shadow: var(--shadow-md); }
+        .user-info { display: flex; align-items: center; gap: 12px; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.9rem; color: #e2e8f0; font-weight: 500; margin-top: 1rem; }
+        .user-info i { font-size: 1.8rem; color: #818cf8; }
+        
+        /* Style de la photo de profil administrateur */
+        .admin-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #818cf8;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            background-color: #fff;
+        }
+
+        /* --- MAIN CONTENT & HEADER --- */
+        .main-content { 
+            flex: 1; 
+            min-width: 0; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            position: relative; 
+            overflow-x: auto;
+        }
+        .top-header { background: var(--surface); padding: 1.2rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); box-shadow: var(--shadow-sm); z-index: 10; }
+        .datetime { font-weight: 600; color: var(--text-muted); font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+        
+        /* LOADER PREMIUM */
+        #global-loader { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.95); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; backdrop-filter: blur(5px); }
+        .loader-brand { font-size: 1.5rem; font-weight: 800; color: var(--secondary); letter-spacing: -0.5px; margin-bottom: 10px; }
+        .spinner { border: 4px solid var(--border); border-top: 4px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+        .loader-text { font-weight: 600; color: var(--text-muted); font-size: 1rem; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hidden { display: none !important; opacity: 0; pointer-events: none; }
+
+        /* --- PAGE STYLES --- */
+        .page-container { padding: 2rem; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 1.5rem; min-width: 800px; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+        .page-title { font-size: 1.8rem; font-weight: 800; color: var(--secondary); letter-spacing: -0.5px; }
+        
+        .btn-add { background: var(--primary); color: white; padding: 0.8rem 1.5rem; border-radius: var(--radius-md); font-weight: 700; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-sm); }
+        .btn-add:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+        /* KPIS */
+        .kpi-row { display: flex; gap: 1.5rem; margin-bottom: 0.5rem; }
+        .kpi-card { background: var(--surface); padding: 1.2rem 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: var(--shadow-sm); display: flex; align-items: center; gap: 15px; flex: 1; }
+        .kpi-icon { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+        .icon-blue { background: #eff6ff; color: var(--primary); }
+        .icon-green { background: #ecfdf5; color: var(--success); }
+        .kpi-info p { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-info h3 { font-size: 1.5rem; color: var(--secondary); font-weight: 800; margin-top: 2px; }
+
+        /* TOOLBAR */
+        .toolbar { display: flex; gap: 15px; background: var(--surface); padding: 1rem 1.5rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border); }
+        .search-box { flex: 1; position: relative; }
+        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.1rem; }
+        .search-box input { width: 100%; padding: 0.8rem 1rem 0.8rem 2.5rem; border: 1px solid var(--border); border-radius: var(--radius-md); outline: none; font-size: 0.95rem; transition: 0.3s; font-weight: 500; }
+        .search-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+        .filter-select { padding: 0.8rem 1.2rem; border: 1px solid var(--border); border-radius: var(--radius-md); outline: none; background: white; font-weight: 600; color: var(--secondary); min-width: 200px; cursor: pointer; }
+        .filter-select:focus { border-color: var(--primary); }
+
+        /* TABLEAU PREMIUM */
+        .table-container { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); border: 1px solid var(--border); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        thead { background: #f8fafc; border-bottom: 2px solid var(--border); }
+        th { padding: 1.2rem 1.5rem; font-weight: 700; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); font-size: 0.95rem; vertical-align: middle; transition: background 0.2s; }
+        tbody tr:hover td { background: #f8fafc; }
+
+        .emp-name { font-weight: 800; color: var(--secondary); display: block; font-size: 1.05rem; }
+        .emp-date { font-size: 0.8rem; color: var(--text-muted); }
+        
+        .badge-role { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-block; letter-spacing: 0.5px;}
+        .role-admin { background: #f5f3ff; color: #7c3aed; border: 1px solid #ddd6fe; }
+        .role-cashier { background: #eff6ff; color: var(--primary); border: 1px solid #bfdbfe; }
+        
+        .badge-status { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: inline-block; letter-spacing: 0.5px; }
+        .status-actif { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+        .status-suspendu { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+        .status-conge { background: #fffbeb; color: #d97706; border: 1px solid #fcd34d; }
+
+        .phone-link { color: var(--text-muted); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+        .phone-link:hover { color: var(--primary); }
+        
+        .salary-cell { font-weight: 800; color: var(--success); font-size: 1.05rem; }
+
+        .action-btns { display: flex; gap: 8px; }
+        .btn-action-sm { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: 0.2s; }
+        .btn-edit { color: #d97706; background: #fef3c7; } .btn-edit:hover { background: #fde68a; }
+        .btn-delete { color: var(--danger); background: #fee2e2; } .btn-delete:hover { background: #fecaca; }
+
+        /* ÉTAT VIDE ÉLÉGANT (Empty State) */
+        .empty-state { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4rem 2rem; color: var(--text-muted); text-align: center; height: 100%; }
+        .empty-state i { font-size: 4rem; color: #cbd5e1; margin-bottom: 15px; }
+        .empty-state h3 { font-size: 1.5rem; color: var(--secondary); font-weight: 700; margin-bottom: 10px; }
+        .empty-state p { font-size: 1rem; max-width: 450px; line-height: 1.5; margin-bottom: 20px; }
+        .empty-state .btn-add-empty { padding: 0.8rem 2rem; background: var(--primary); color: white; border-radius: var(--radius-md); font-weight: 700; font-size: 1rem; transition: 0.2s; box-shadow: var(--shadow-sm); }
+        .empty-state .btn-add-empty:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+        /* --- MODAL CRM --- */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 1; transition: 0.3s; backdrop-filter: blur(5px); }
+        .modal-content { background: var(--surface); width: 600px; border-radius: var(--radius-lg); display: flex; flex-direction: column; overflow: hidden; transform: scale(1); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); }
+        .modal.hidden { opacity: 0; pointer-events: none; }
+        .modal.hidden .modal-content { transform: scale(0.95) translateY(20px); }
+        
+        .modal-header { padding: 1.5rem 2rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--background); }
+        .modal-header h3 { font-size: 1.3rem; font-weight: 800; color: var(--secondary); letter-spacing: -0.5px; }
+        
+        .modal-body { padding: 2rem; display: flex; flex-direction: column; gap: 1.2rem; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 0.85rem; font-weight: 700; color: var(--secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group input, .form-group select { padding: 0.9rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-md); outline: none; font-size: 1rem; font-weight: 500; color: var(--text-main); background: white; transition: 0.2s; }
+        .form-group input:focus, .form-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+        
+        .form-row { display: flex; gap: 1.5rem; }
+        .form-row .form-group { flex: 1; }
+
+        .modal-footer { padding: 1.5rem 2rem; border-top: 1px solid var(--border); background: var(--background); display: flex; justify-content: flex-end; gap: 12px; }
+        .btn-cancel { padding: 0.8rem 1.5rem; background: white; border: 1px solid var(--border); border-radius: var(--radius-md); font-weight: 700; color: var(--text-muted); }
+        .btn-cancel:hover { background: #f1f5f9; color: var(--secondary); }
+        .btn-save { padding: 0.8rem 2rem; background: var(--primary); color: white; border-radius: var(--radius-md); font-weight: 700; box-shadow: var(--shadow-sm); }
+        .btn-save:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+        /* --- TOASTS --- */
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; }
+        .toast { padding: 1.2rem 1.5rem; border-radius: var(--radius-md); background: white; color: var(--secondary); font-weight: 600; font-size: 0.95rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 15px; transform: translateX(120%); animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards, slideOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards 3.5s; border-left: 6px solid; }
+        .toast.success { border-color: var(--success); } .toast.error { border-color: var(--danger); } .toast.warning { border-color: var(--warning); }
+        .toast i { font-size: 1.5rem; } .toast.success i { color: var(--success); } .toast.error i { color: var(--danger); } .toast.warning i { color: var(--warning); }
+        @keyframes slideIn { to { transform: translateX(0); } } @keyframes slideOut { to { transform: translateX(120%); opacity: 0; margin-top: -60px; } }
+
+    </style>
+</head>
+<body>
+
+    <div id="toast-container"></div>
+
+    <nav class="sidebar">
+        <div class="brand"><h2><i class="fas fa-store"></i> ROGER PRO</h2></div>
+        <ul class="nav-links">
+            <li onclick="window.location.href='index.html'"><i class="fas fa-cash-register"></i> Point de Vente</li>
+            <li onclick="window.location.href='stocks.html'"><i class="fas fa-boxes"></i> Stocks</li>
+            <li onclick="window.location.href='clients.html'"><i class="fas fa-users"></i> Clients</li>
+            <li onclick="window.location.href='rapports.html'"><i class="fas fa-chart-bar"></i> Rapports</li>
+            <li onclick="window.location.href='fournisseurs.html'"><i class="fas fa-truck"></i> Fournisseurs</li>
+            <li onclick="window.location.href='depenses.html'"><i class="fas fa-wallet"></i> Dépenses</li>
+            <li class="active" onclick="window.location.href='employes.html'"><i class="fas fa-user-shield"></i> Employés</li>
+            <li onclick="window.location.href='paie.html'"><i class="fas fa-file-invoice-dollar"></i> Paie & Salaires</li>
+            <li onclick="window.location.href='commandes.html'"><i class="fas fa-clipboard-list"></i> Commandes</li>
+            <li onclick="window.location.href='parametres.html'"><i class="fas fa-cog"></i> Paramètres</li>
+        </ul>
+        <div class="user-info">
+            <!-- Remplacement de l'icône par l'image de profil -->
+            <img src="https://i.imgur.com/zbAQtQX.jpeg" alt="Adama D. Gnoumou" class="admin-avatar">
+            <div>
+                <span style="display:block; font-size:0.75rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px;">Administrateur</span>
+                <span style="font-weight:700; color:white; font-size:1rem;">Adama D. Gnoumou</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div id="global-loader">
+            <div class="spinner"></div>
+            <div class="loader-brand">DATIEN & FILS RH</div>
+            <span class="loader-text">Chargement des fiches du personnel...</span>
+        </div>
+
+        <header class="top-header">
+            <div class="datetime" id="current-datetime"><i class="far fa-clock"></i> <span>Chargement...</span></div>
+            <div class="top-actions">
+                <button class="btn-icon" title="Plein écran" onclick="window.toggleFullScreen()"><i class="fas fa-expand"></i></button>
+            </div>
+        </header>
+
+        <div class="page-container">
+            <div class="page-header">
+                <h1 class="page-title">Ressources Humaines & Accès</h1>
+                <button class="btn-add" onclick="window.openEmployeeModal()"><i class="fas fa-user-plus"></i> Embaucher / Créer Compte</button>
+            </div>
+
+            <!-- KPIs -->
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-icon icon-blue"><i class="fas fa-id-badge"></i></div>
+                    <div class="kpi-info">
+                        <p>Effectif Total</p>
+                        <h3 id="kpi-total">0</h3>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon icon-green"><i class="fas fa-coins"></i></div>
+                    <div class="kpi-info">
+                        <p>Masse Salariale Mensuelle</p>
+                        <h3 id="kpi-salary">0 F</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="toolbar">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="search-input" placeholder="Rechercher par nom d'employé...">
+                </div>
+                <select class="filter-select" id="role-filter">
+                    <option value="Tout">Tous les rôles</option>
+                    <option value="Administrateur">Administrateur</option>
+                    <option value="Caissier">Caissier</option>
+                </select>
+            </div>
+
+            <div class="table-container" id="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nom & Statut</th>
+                            <th>Poste / Permissions</th>
+                            <th>Identifiants / Contact</th>
+                            <th>Salaire Fixe</th>
+                            <th style="width: 100px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="employees-table-body">
+                        <!-- Injection dynamique via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL EMPLOYÉ -->
+    <div id="employee-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Fiche Employé</h3>
+                <button class="btn-icon" onclick="window.closeEmployeeModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="employee-form" onsubmit="window.saveEmployee(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="emp-id">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nom complet *</label>
+                            <input type="text" id="emp-name" required placeholder="Ex: Jean Traoré">
+                        </div>
+                        <div class="form-group">
+                            <label>Date d'embauche *</label>
+                            <input type="date" id="emp-date" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Téléphone *</label>
+                            <input type="tel" id="emp-phone" required placeholder="Ex: 70 00 00 00">
+                        </div>
+                        <div class="form-group">
+                            <label>Rôle / Accès Système *</label>
+                            <select id="emp-role" required>
+                                <option value="Caissier">Caissier (Ventes seules)</option>
+                                <option value="Administrateur">Administrateur (Accès total)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Salaire Mensuel Fixe (FCFA) *</label>
+                            <input type="number" id="emp-salary" required min="0" placeholder="Ex: 150000">
+                        </div>
+                        <div class="form-group">
+                            <label>Statut</label>
+                            <select id="emp-status" required>
+                                <option value="Actif">Actif</option>
+                                <option value="En congé">En congé</option>
+                                <option value="Suspendu">Suspendu / Fin de contrat</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:10px; padding:15px; border:1px dashed var(--border); border-radius:10px; background:#f8fafc;">
+                        <label style="font-size:0.85rem; font-weight:700; color:var(--secondary); text-transform:uppercase; margin-bottom:10px; display:block;">Informations de Connexion POS</label>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label style="font-size:0.75rem;">Nom d'utilisateur</label>
+                                <input type="text" id="emp-username" required placeholder="Ex: jean.traore" style="font-family:monospace; color:var(--primary);">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.75rem;">Mot de passe de caisse</label>
+                                <input type="text" id="emp-password" required placeholder="Ex: 1234">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="window.closeEmployeeModal()">Annuler</button>
+                    <button type="submit" class="btn-save" id="btn-save-emp">Enregistrer la fiche</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCRIPT FIREBASE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOExj8-x4KjGIQi2ewzU7LQP302l9pZrU",
+            authDomain: "atlasgroupebusiness.firebaseapp.com",
+            databaseURL: "https://atlasgroupebusiness-default-rtdb.firebaseio.com",
+            projectId: "atlasgroupebusiness",
+            storageBucket: "atlasgroupebusiness.firebasestorage.app",
+            messagingSenderId: "876963848028",
+            appId: "1:876963848028:web:89a37065ded7b60c1c6b99"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app, "roger-db");
+
+        let employees = [];
+        const formatMoney = (amount) => new Intl.NumberFormat('fr-FR').format(amount || 0) + ' F';
+
+        window.showToast = (msg, type = 'success') => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icon = type === 'error' ? 'fa-exclamation-circle' : type === 'warning' ? 'fa-exclamation-triangle' : 'fa-check-circle';
+            toast.innerHTML = `<i class="fas ${icon}"></i> <span>${msg}</span>`;
+            container.appendChild(toast);
+            if(navigator.vibrate) navigator.vibrate(50);
+            setTimeout(() => { if(toast.parentElement) toast.remove(); }, 3500);
+        };
+
+        setInterval(() => {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            document.getElementById('current-datetime').innerHTML = `<i class="far fa-clock"></i> <span>${now.toLocaleDateString('fr-FR', options)}</span>`;
+        }, 1000);
+
+        async function initData() {
+            try {
+                const snapshot = await getDocs(collection(db, "employees"));
+                employees = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderTable();
+                setTimeout(() => document.getElementById('global-loader').classList.add('hidden'), 400);
+            } catch (error) {
+                console.error(error);
+                window.showToast("Erreur de chargement des employés", "error");
+            }
+        }
+
+        // METTRE A JOUR LES KPIs
+        function updateKPIs() {
+            document.getElementById('kpi-total').innerText = employees.length;
+            
+            let totalSalary = 0;
+            employees.forEach(e => {
+                if(e.status === 'Actif') totalSalary += (e.salary || 0);
+            });
+            document.getElementById('kpi-salary').innerText = formatMoney(totalSalary);
+        }
+
+        // AFFICHAGE TABLEAU & ÉTAT VIDE
+        function renderTable() {
+            const tableWrapper = document.getElementById('table-wrapper');
+            const tbody = document.getElementById('employees-table-body');
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const roleFilter = document.getElementById('role-filter').value;
+            
+            updateKPIs();
+
+            // Si la base de données est complètement vide (Aucun employé créé)
+            if (employees.length === 0) {
+                tableWrapper.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-users-slash"></i>
+                        <h3>Aucun personnel enregistré</h3>
+                        <p>Créez des fiches pour vos caissiers et administrateurs pour suivre les accès au système et gérer la masse salariale.</p>
+                        <button class="btn-add-empty" onclick="window.openEmployeeModal()"><i class="fas fa-plus"></i> Créer le premier compte</button>
+                    </div>
+                `;
+                return;
+            }
+
+            // Si la base contient des employés, on s'assure que le tableau standard est affiché
+            if (!document.querySelector('table')) {
+                tableWrapper.innerHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nom & Statut</th>
+                                <th>Poste / Permissions</th>
+                                <th>Identifiants / Contact</th>
+                                <th>Salaire Fixe</th>
+                                <th style="width: 100px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employees-table-body"></tbody>
+                    </table>
+                `;
+            }
+
+            // Ré-assigner tbody au cas où le HTML aurait été remplacé par l'état vide
+            const currentTbody = document.getElementById('employees-table-body');
+            currentTbody.innerHTML = '';
+
+            let filtered = employees.filter(e => {
+                const matchSearch = e.name.toLowerCase().includes(searchTerm) || (e.username && e.username.toLowerCase().includes(searchTerm));
+                const matchRole = roleFilter === 'Tout' || e.role === roleFilter;
+                return matchSearch && matchRole;
+            });
+
+            // Si la recherche ne donne aucun résultat
+            if(filtered.length === 0 && employees.length > 0) {
+                currentTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 3rem; color: var(--text-muted);"><i class="fas fa-search" style="font-size:2rem; opacity:0.3; margin-bottom:10px; display:block;"></i>Aucun résultat pour cette recherche.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(e => {
+                const roleClass = e.role === 'Administrateur' ? 'role-admin' : 'role-cashier';
+                
+                let statusClass = 'status-actif';
+                if(e.status === 'En congé') statusClass = 'status-conge';
+                if(e.status === 'Suspendu') statusClass = 'status-suspendu';
+
+                const hireDate = e.hireDate ? new Date(e.hireDate).toLocaleDateString('fr-FR') : 'Non définie';
+
+                currentTbody.innerHTML += `
+                    <tr>
+                        <td>
+                            <span class="emp-name">${e.name}</span>
+                            <span class="badge-status ${statusClass}" style="margin-top:4px;">${e.status || 'Actif'}</span>
+                        </td>
+                        <td>
+                            <span class="badge-role ${roleClass}">${e.role}</span>
+                            <span class="emp-date" style="display:block; margin-top:4px;">Embauche: ${hireDate}</span>
+                        </td>
+                        <td>
+                            <div style="font-family:monospace; color:var(--primary); font-weight:700; font-size:1.05rem;">@${e.username}</div>
+                            <a href="tel:${e.phone}" class="phone-link"><i class="fas fa-phone"></i> ${e.phone}</a>
+                        </td>
+                        <td class="salary-cell">${formatMoney(e.salary)}</td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn-action-sm btn-edit" title="Modifier la fiche" onclick="window.editEmployee('${e.id}')"><i class="fas fa-pen"></i></button>
+                                <button class="btn-action-sm btn-delete" title="Supprimer" onclick="window.deleteEmployee('${e.id}', '${e.name}')"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        document.getElementById('search-input').addEventListener('input', renderTable);
+        document.getElementById('role-filter').addEventListener('change', renderTable);
+
+        window.openEmployeeModal = () => {
+            document.getElementById('employee-form').reset();
+            document.getElementById('emp-id').value = '';
+            
+            // Date du jour par défaut pour l'embauche
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('emp-date').value = today;
+
+            document.getElementById('modal-title').innerText = 'Créer une Fiche Employé';
+            document.getElementById('employee-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('emp-name').focus(), 100);
+        };
+
+        window.closeEmployeeModal = () => document.getElementById('employee-modal').classList.add('hidden');
+
+        window.editEmployee = (id) => {
+            const e = employees.find(item => item.id === id);
+            if(e) {
+                document.getElementById('emp-id').value = e.id;
+                document.getElementById('emp-name').value = e.name;
+                document.getElementById('emp-phone').value = e.phone;
+                document.getElementById('emp-role').value = e.role;
+                document.getElementById('emp-username').value = e.username;
+                document.getElementById('emp-password').value = e.password || '';
+                document.getElementById('emp-salary').value = e.salary || 0;
+                document.getElementById('emp-status').value = e.status || 'Actif';
+                document.getElementById('emp-date').value = e.hireDate || '';
+
+                document.getElementById('modal-title').innerText = 'Modifier la Fiche';
+                document.getElementById('employee-modal').classList.remove('hidden');
+            }
+        };
+
+        window.saveEmployee = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-save-emp');
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Enregistrement...';
+            btn.disabled = true;
+
+            const id = document.getElementById('emp-id').value;
+            const data = {
+                name: document.getElementById('emp-name').value.trim(),
+                phone: document.getElementById('emp-phone').value.trim(),
+                role: document.getElementById('emp-role').value,
+                username: document.getElementById('emp-username').value.trim().toLowerCase(),
+                password: document.getElementById('emp-password').value.trim(), // À hasher si système d'auth complet
+                salary: parseInt(document.getElementById('emp-salary').value) || 0,
+                status: document.getElementById('emp-status').value,
+                hireDate: document.getElementById('emp-date').value
+            };
+
+            try {
+                if(id) {
+                    await updateDoc(doc(db, "employees", id), data);
+                    window.showToast("Fiche RH mise à jour !");
+                } else {
+                    await addDoc(collection(db, "employees"), data);
+                    window.showToast("Nouvel employé enregistré !");
+                }
+                window.closeEmployeeModal();
+                initData();
+            } catch (err) {
+                console.error(err);
+                window.showToast("Erreur lors de l'enregistrement", "error");
+            } finally {
+                btn.innerHTML = 'Enregistrer la fiche';
+                btn.disabled = false;
+            }
+        };
+
+        window.deleteEmployee = async (id, name) => {
+            if(confirm(`⚠️ Supprimer définitivement l'accès et la fiche de "${name}" ?`)) {
+                try {
+                    await deleteDoc(doc(db, "employees", id));
+                    window.showToast("Employé supprimé du système", "warning");
+                    initData();
+                } catch(e) {
+                    window.showToast("Erreur de suppression", "error");
+                }
+            }
+        };
+
+        window.toggleFullScreen = () => {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+            else if (document.exitFullscreen) document.exitFullscreen();
+        };
+
+        initData();
+    </script>
+</body>
+</html>

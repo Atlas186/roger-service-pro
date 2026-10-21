@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roger Service Pro - Gestion d'Inventaire</title>
+    <!-- Polices et Icônes -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Librairie Scanner Code-Barres -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    
+    <style>
+        /* --- DESIGN SYSTEM PREMIUM --- */
+        :root {
+            --primary: #4f46e5; 
+            --primary-hover: #4338ca;
+            --secondary: #0f172a; 
+            --secondary-light: #1e293b;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --success-hover: #059669;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --border: #e2e8f0;
+            
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --radius-md: 10px;
+            --radius-lg: 16px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        
+        /* GESTION DE L'ÉCRAN (Empêche le menu de disparaître) */
+        body { 
+            display: flex; 
+            height: 100vh; 
+            width: 100vw;
+            background-color: var(--background); 
+            color: var(--text-main); 
+            overflow: hidden; 
+            -webkit-font-smoothing: antialiased; 
+        }
+        
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 20px; }
+
+        button { cursor: pointer; border: none; outline: none; font-weight: 600; transition: all 0.2s ease; }
+        .btn-icon { background: none; font-size: 1.2rem; color: var(--text-muted); padding: 8px; border-radius: 50%; }
+        .btn-icon:hover { color: var(--primary); background: #eff6ff; }
+        
+        /* --- SIDEBAR PREMIUM (VERROUILLÉE) --- */
+        .sidebar { 
+            width: 250px; 
+            min-width: 250px; 
+            flex-shrink: 0;   
+            background: linear-gradient(180deg, var(--secondary) 0%, var(--secondary-light) 100%); 
+            color: white; 
+            display: flex !important; 
+            flex-direction: column; 
+            padding: 2rem 1.2rem; 
+            z-index: 10; 
+            box-shadow: 4px 0 15px rgba(0,0,0,0.05); 
+            overflow-y: auto; 
+        }
+        .brand h2 { font-size: 1.3rem; font-weight: 800; display: flex; align-items: center; gap: 12px; margin-bottom: 3rem; letter-spacing: -0.5px; }
+        .brand h2 i { color: #818cf8; font-size: 1.5rem; }
+        .nav-links { list-style: none; flex: 1; display: flex; flex-direction: column; gap: 5px; }
+        .nav-links li { padding: 0.9rem 1.2rem; border-radius: var(--radius-md); display: flex; align-items: center; gap: 15px; color: #94a3b8; cursor: pointer; transition: 0.3s; font-weight: 500; font-size: 0.9rem; }
+        .nav-links li i { font-size: 1.1rem; width: 20px; text-align: center; }
+        .nav-links li:hover { background-color: rgba(255,255,255,0.05); color: white; }
+        .nav-links li.active { background-color: var(--primary); color: white; box-shadow: var(--shadow-md); }
+        .user-info { display: flex; align-items: center; gap: 12px; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.9rem; color: #e2e8f0; font-weight: 500; margin-top: 1rem; }
+        .user-info i { font-size: 1.8rem; color: #818cf8; }
+        
+        /* Style de la photo de profil administrateur */
+        .admin-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #818cf8;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            background-color: #fff;
+        }
+
+        /* --- MAIN CONTENT & HEADER --- */
+        .main-content { 
+            flex: 1; 
+            min-width: 0; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            position: relative; 
+            overflow-x: auto;
+        }
+        .top-header { background: var(--surface); padding: 1.2rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); box-shadow: var(--shadow-sm); z-index: 10; }
+        .datetime { font-weight: 600; color: var(--text-muted); font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+        
+        /* LOADER PREMIUM */
+        #global-loader { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.95); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; backdrop-filter: blur(5px); }
+        .loader-brand { font-size: 1.5rem; font-weight: 800; color: var(--secondary); letter-spacing: -0.5px; margin-bottom: 10px; }
+        .spinner { border: 4px solid var(--border); border-top: 4px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+        .loader-text { font-weight: 600; color: var(--text-muted); font-size: 1rem; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hidden { display: none !important; opacity: 0; pointer-events: none; }
+
+        /* --- STYLES INVENTAIRE PREMIUM --- */
+        .stocks-container { padding: 2rem; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 1.5rem; min-width: 900px; }
+        
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+        .page-title { font-size: 1.8rem; font-weight: 800; color: var(--secondary); letter-spacing: -0.5px; }
+        
+        .btn-add { background: var(--primary); color: white; padding: 0.8rem 1.5rem; border-radius: var(--radius-md); font-weight: 700; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-sm); transition: 0.2s; }
+        .btn-add:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+        /* Mini KPIs Inventaire */
+        .kpi-row { display: flex; gap: 1.5rem; margin-bottom: 0.5rem; }
+        .kpi-card { background: var(--surface); padding: 1.2rem 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: var(--shadow-sm); display: flex; align-items: center; gap: 15px; flex: 1; }
+        .kpi-icon { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+        .icon-blue { background: #eff6ff; color: var(--primary); }
+        .icon-red { background: #fef2f2; color: var(--danger); }
+        .kpi-info p { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-info h3 { font-size: 1.5rem; color: var(--secondary); font-weight: 800; margin-top: 2px; }
+
+        /* Toolbar */
+        .toolbar { display: flex; gap: 15px; background: var(--surface); padding: 1rem 1.5rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border); }
+        .search-box { flex: 1; position: relative; }
+        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.1rem; }
+        .search-box input { width: 100%; padding: 0.8rem 1rem 0.8rem 2.5rem; border: 1px solid var(--border); border-radius: var(--radius-md); outline: none; font-size: 0.95rem; transition: 0.3s; font-weight: 500; }
+        .search-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+        
+        .filter-select { padding: 0.8rem 1.2rem; border: 1px solid var(--border); border-radius: var(--radius-md); outline: none; background: white; font-weight: 600; color: var(--secondary); min-width: 200px; cursor: pointer; }
+        .filter-select:focus { border-color: var(--primary); }
+
+        /* TABLEAU PREMIUM */
+        .table-container { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); border: 1px solid var(--border); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        thead { background: #f8fafc; border-bottom: 2px solid var(--border); }
+        th { padding: 1.2rem 1.5rem; font-weight: 700; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); font-size: 0.95rem; vertical-align: middle; transition: background 0.2s; }
+        tbody tr:hover td { background: #f8fafc; }
+        
+        .product-img-cell { width: 70px; }
+        .product-img { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; background: #f1f5f9; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 1.2rem; overflow: hidden; }
+        .product-img img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .product-name { font-weight: 800; color: var(--secondary); font-size: 1.05rem; display: block; margin-bottom: 2px; }
+        .product-barcode { font-size: 0.75rem; color: var(--text-muted); font-family: monospace; letter-spacing: 1px; display: block; margin-bottom: 6px; }
+        
+        .badge-category { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; display: inline-block; background: #e0f2fe; color: #0369a1; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .finance-details { display: flex; flex-direction: column; gap: 4px; }
+        .finance-line { display: flex; justify-content: space-between; font-size: 0.85rem; width: 140px; }
+        .finance-line.buy { color: var(--text-muted); }
+        .finance-line.sell { font-weight: 800; color: var(--secondary); font-size: 0.95rem; border-top: 1px dashed var(--border); padding-top: 2px; }
+        .badge-profit { background: #ecfdf5; color: #059669; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; display: inline-block; border: 1px solid #a7f3d0; margin-top: 4px; }
+        .badge-loss { background: #fef2f2; color: #dc2626; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; display: inline-block; border: 1px solid #fecaca; margin-top: 4px; }
+
+        .stock-status { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; }
+        .stock-good { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+        .stock-low { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+        .action-btns { display: flex; gap: 8px; }
+        .btn-action-sm { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: 0.2s; border: 1px solid transparent; }
+        .btn-edit { color: #d97706; background: #fef3c7; } .btn-edit:hover { background: #fde68a; }
+        .btn-delete { color: var(--danger); background: #fee2e2; } .btn-delete:hover { background: #fecaca; color: white; }
+
+        /* ÉTAT VIDE ÉLÉGANT (Empty State) */
+        .empty-state { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4rem 2rem; color: var(--text-muted); text-align: center; height: 100%; }
+        .empty-state i { font-size: 4rem; color: #cbd5e1; margin-bottom: 15px; }
+        .empty-state h3 { font-size: 1.5rem; color: var(--secondary); font-weight: 700; margin-bottom: 10px; }
+        .empty-state p { font-size: 1rem; max-width: 450px; line-height: 1.5; margin-bottom: 20px; }
+        .empty-state .btn-add-empty { padding: 0.8rem 2rem; background: var(--primary); color: white; border-radius: var(--radius-md); font-weight: 700; font-size: 1rem; transition: 0.2s; box-shadow: var(--shadow-sm); }
+        .empty-state .btn-add-empty:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+        /* --- MODAL PIM (Upload Image & Scanner) --- */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 1; transition: 0.3s; backdrop-filter: blur(5px); }
+        .modal-content { background: var(--surface); width: 650px; max-height: 95vh; overflow-y: auto; border-radius: var(--radius-lg); display: flex; flex-direction: column; transform: scale(1); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); }
+        .modal.hidden { opacity: 0; pointer-events: none; }
+        .modal.hidden .modal-content { transform: scale(0.95) translateY(20px); }
+        
+        .modal-header { padding: 1.5rem 2rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--background); position: sticky; top: 0; z-index: 10; }
+        .modal-header h3 { font-size: 1.3rem; font-weight: 800; color: var(--secondary); letter-spacing: -0.5px; }
+        
+        .modal-body { padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem; }
+        
+        /* Zone Image Upload */
+        .image-upload-wrapper { display: flex; gap: 20px; align-items: center; background: #f8fafc; padding: 1.5rem; border-radius: var(--radius-md); border: 1px dashed #cbd5e1; }
+        .img-preview { width: 100px; height: 100px; border-radius: 12px; background: white; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: var(--shadow-sm); flex-shrink: 0; }
+        .img-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .img-preview i { font-size: 2.5rem; color: #cbd5e1; }
+        .upload-controls { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+        .upload-controls label.title { font-size: 0.85rem; font-weight: 700; color: var(--secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .custom-file-upload { display: inline-block; padding: 0.6rem 1rem; background: white; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-weight: 600; color: var(--text-main); font-size: 0.9rem; transition: 0.2s; text-align: center; }
+        .custom-file-upload:hover { border-color: var(--primary); color: var(--primary); }
+        input[type="file"] { display: none; }
+        #upload-progress { font-size: 0.8rem; color: var(--primary); font-weight: 600; display: none; }
+
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 0.85rem; font-weight: 700; color: var(--secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group input, .form-group select { padding: 0.9rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-md); outline: none; font-size: 1rem; font-weight: 500; color: var(--text-main); background: white; transition: 0.2s; }
+        .form-group input:focus, .form-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+        
+        /* Barcode Input Group */
+        .barcode-group { display: flex; gap: 10px; }
+        .barcode-group input { flex: 1; font-family: monospace; font-size: 1.1rem; letter-spacing: 1px; }
+        .btn-scan { background: var(--secondary); color: white; border-radius: var(--radius-md); padding: 0 1.2rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .btn-scan:hover { background: var(--secondary-light); }
+
+        .form-row { display: flex; gap: 1.5rem; }
+        .form-row .form-group { flex: 1; }
+
+        /* Calcul Bénéfice */
+        .profit-calculator { background: #eff6ff; border: 1px solid #bfdbfe; padding: 1rem; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center; }
+        .profit-calculator span { font-weight: 600; color: var(--primary); font-size: 0.9rem; text-transform: uppercase; }
+        .profit-val { font-size: 1.3rem; font-weight: 800; color: var(--success); }
+
+        .modal-footer { padding: 1.5rem 2rem; border-top: 1px solid var(--border); background: var(--background); display: flex; justify-content: flex-end; gap: 12px; position: sticky; bottom: 0; z-index: 10; }
+        .btn-cancel { padding: 0.8rem 1.5rem; background: white; border: 1px solid var(--border); border-radius: var(--radius-md); font-weight: 700; color: var(--text-muted); }
+        .btn-cancel:hover { background: #f1f5f9; color: var(--secondary); }
+        .btn-save { padding: 0.8rem 2rem; background: var(--primary); color: white; border-radius: var(--radius-md); font-weight: 700; box-shadow: var(--shadow-sm); }
+        .btn-save:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+        /* --- MODAL SCANNER CAMÉRA --- */
+        #scanner-modal .modal-content { width: 100%; max-width: 500px; background: black; border: none; }
+        #scanner-modal .modal-header { background: #1e293b; color: white; border-bottom: none; }
+        #scanner-modal .modal-header h3 { color: white; }
+        #scanner-modal .btn-icon { background: rgba(255,255,255,0.1); color: white; border: none; }
+        #reader { width: 100%; min-height: 300px; background: black; }
+
+        /* --- TOASTS --- */
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; }
+        .toast { padding: 1.2rem 1.5rem; border-radius: var(--radius-md); background: white; color: var(--secondary); font-weight: 600; font-size: 0.95rem; box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.15); display: flex; align-items: center; gap: 15px; transform: translateX(120%); animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards, slideOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards 3.5s; border-left: 6px solid; }
+        .toast.success { border-color: var(--success); } .toast.error { border-color: var(--danger); } .toast.warning { border-color: var(--warning); }
+        .toast i { font-size: 1.5rem; } .toast.success i { color: var(--success); } .toast.error i { color: var(--danger); } .toast.warning i { color: var(--warning); }
+        @keyframes slideIn { to { transform: translateX(0); } } @keyframes slideOut { to { transform: translateX(120%); opacity: 0; margin-top: -60px; } }
+
+    </style>
+</head>
+<body>
+
+    <div id="toast-container"></div>
+
+    <!-- NAVIGATION COMPLÈTE & VERROUILLÉE -->
+    <nav class="sidebar">
+        <div class="brand"><h2><i class="fas fa-store"></i> ROGER PRO</h2></div>
+        <ul class="nav-links">
+            <li onclick="window.location.href='index.html'"><i class="fas fa-cash-register"></i> Point de Vente</li>
+            <li class="active" onclick="window.location.href='stocks.html'"><i class="fas fa-boxes"></i> Stocks</li>
+            <li onclick="window.location.href='clients.html'"><i class="fas fa-users"></i> Clients</li>
+            <li onclick="window.location.href='rapports.html'"><i class="fas fa-chart-bar"></i> Rapports</li>
+            <li onclick="window.location.href='fournisseurs.html'"><i class="fas fa-truck"></i> Fournisseurs</li>
+            <li onclick="window.location.href='depenses.html'"><i class="fas fa-wallet"></i> Dépenses</li>
+            <li onclick="window.location.href='employes.html'"><i class="fas fa-user-shield"></i> Employés</li>
+            <li onclick="window.location.href='paie.html'"><i class="fas fa-file-invoice-dollar"></i> Paie & Salaires</li>
+            <li onclick="window.location.href='commandes.html'"><i class="fas fa-clipboard-list"></i> Commandes</li>
+            <li onclick="window.location.href='parametres.html'"><i class="fas fa-cog"></i> Paramètres</li>
+        </ul>
+        <div class="user-info">
+            <!-- Remplacement de l'icône par l'image de profil -->
+            <img src="https://i.imgur.com/zbAQtQX.jpeg" alt="Adama D. Gnoumou" class="admin-avatar">
+            <div>
+                <span style="display:block; font-size:0.75rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px;">Administrateur</span>
+                <span style="font-weight:700; color:white; font-size:1rem;">Adama D. Gnoumou</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div id="global-loader">
+            <div class="spinner"></div>
+            <div class="loader-brand">DATIEN & FILS PIM</div>
+            <span class="loader-text">Chargement de l'inventaire central...</span>
+        </div>
+
+        <header class="top-header">
+            <div class="datetime" id="current-datetime"><i class="far fa-clock"></i> <span>Chargement...</span></div>
+            <div class="top-actions">
+                <button class="btn-icon" title="Plein écran" onclick="window.toggleFullScreen()"><i class="fas fa-expand"></i></button>
+            </div>
+        </header>
+
+        <div class="stocks-container">
+            <div class="page-header">
+                <h1 class="page-title">Inventaire & Catalogue ERP</h1>
+                <button class="btn-add" onclick="window.openProductModal()"><i class="fas fa-plus-circle"></i> Ajouter au Catalogue</button>
+            </div>
+
+            <!-- KPIs Inventaire -->
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-icon icon-blue"><i class="fas fa-boxes"></i></div>
+                    <div class="kpi-info">
+                        <p>Valeur à la Vente (Stock)</p>
+                        <h3 id="kpi-stock-value">0 F</h3>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon icon-red"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div class="kpi-info">
+                        <p>Articles en Rupture</p>
+                        <h3 id="kpi-stock-empty">0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="toolbar">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="search-input" placeholder="Rechercher par nom, code-barres...">
+                </div>
+                <select class="filter-select" id="category-filter">
+                    <option value="Tout">Toutes les catégories</option>
+                    <!-- Dynamique -->
+                </select>
+            </div>
+
+            <div class="table-container" id="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:70px;">Image</th>
+                            <th>Fiche Produit</th>
+                            <th>Tarification & Marge</th>
+                            <th>Disponibilité</th>
+                            <th style="width:100px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="products-table-body">
+                        <!-- Lignes de produits -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL PIM AJOUT/MODIF PRODUIT -->
+    <div id="product-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Créer une Fiche Produit</h3>
+                <button class="btn-icon" onclick="window.closeProductModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="product-form" onsubmit="window.saveProduct(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="product-id">
+                    <input type="hidden" id="product-image-url">
+                    
+                    <!-- UPLOAD D'IMAGE -->
+                    <div class="image-upload-wrapper">
+                        <div class="img-preview" id="img-preview-box">
+                            <i class="fas fa-image"></i>
+                        </div>
+                        <div class="upload-controls">
+                            <label class="title">Visuel du produit (Optionnel)</label>
+                            <label class="custom-file-upload">
+                                <i class="fas fa-upload"></i> Depuis l'appareil
+                                <input type="file" id="product-image-input" accept="image/png, image/jpeg, image/webp">
+                            </label>
+                            <span id="upload-progress">Importation en cours...</span>
+                        </div>
+                    </div>
+                    
+                    <!-- CODE BARRES AVEC SCANNER -->
+                    <div class="form-group">
+                        <label>Code-barres (Optionnel)</label>
+                        <div class="barcode-group">
+                            <input type="text" id="product-barcode" placeholder="Ex: 3700123456789">
+                            <button type="button" class="btn-scan" onclick="window.startScanner()"><i class="fas fa-camera"></i> Scanner</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Désignation / Nom complet *</label>
+                        <input type="text" id="product-name" required placeholder="Ex: Riz Parfumé 5kg (Broli)">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Famille de produit *</label>
+                            <select id="product-category" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Quantité en stock *</label>
+                            <input type="number" id="product-stock" required min="0" placeholder="Ex: 50">
+                        </div>
+                    </div>
+
+                    <!-- TARIFICATION ET MARGE -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Prix d'Achat (Unitaire) *</label>
+                            <input type="number" id="product-purchase" required min="0" placeholder="Coût d'achat..." oninput="window.calcProfit()">
+                        </div>
+                        <div class="form-group">
+                            <label>Prix de Vente (Unitaire) *</label>
+                            <input type="number" id="product-price" required min="0" placeholder="Prix client..." oninput="window.calcProfit()">
+                        </div>
+                    </div>
+
+                    <div class="profit-calculator">
+                        <span>Bénéfice estimé par article :</span>
+                        <div class="profit-val" id="profit-display">0 F (0%)</div>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="window.closeProductModal()">Annuler</button>
+                    <button type="submit" class="btn-save" id="btn-save-product">Sauvegarder la fiche</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL CAMÉRA SCANNER -->
+    <div id="scanner-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Scanner un code-barres</h3>
+                <button class="btn-icon" onclick="window.stopScanner()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding:0; background:black;">
+                <div id="reader"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT FIREBASE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+
+        // CONFIGURATION DATIEN & FILS
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOExj8-x4KjGIQi2ewzU7LQP302l9pZrU",
+            authDomain: "atlasgroupebusiness.firebaseapp.com",
+            databaseURL: "https://atlasgroupebusiness-default-rtdb.firebaseio.com",
+            projectId: "atlasgroupebusiness",
+            storageBucket: "atlasgroupebusiness.firebasestorage.app",
+            messagingSenderId: "876963848028",
+            appId: "1:876963848028:web:89a37065ded7b60c1c6b99"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app, "roger-db");
+        const storage = getStorage(app);
+
+        let products = [];
+        let categories = [];
+        let html5QrCode; // Instance du scanner
+
+        // UTILITAIRES
+        const formatMoney = (amount) => new Intl.NumberFormat('fr-FR').format(amount) + ' F';
+
+        window.showToast = (msg, type = 'success') => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icon = type === 'error' ? 'fa-exclamation-circle' : type === 'warning' ? 'fa-exclamation-triangle' : 'fa-check-circle';
+            toast.innerHTML = `<i class="fas ${icon}"></i> <span>${msg}</span>`;
+            container.appendChild(toast);
+            if (navigator.vibrate) navigator.vibrate(50);
+            setTimeout(() => { if(toast.parentElement) toast.remove(); }, 3500);
+        };
+
+        setInterval(() => {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            document.getElementById('current-datetime').innerHTML = `<i class="far fa-clock"></i> <span>${now.toLocaleDateString('fr-FR', options)}</span>`;
+        }, 1000);
+
+        // INITIALISATION
+        async function initData() {
+            try {
+                const catSnapshot = await getDocs(collection(db, "categories"));
+                const filterSelect = document.getElementById('category-filter');
+                const formSelect = document.getElementById('product-category');
+                
+                filterSelect.innerHTML = `<option value="Tout">Toutes les catégories</option>`;
+                formSelect.innerHTML = ``;
+                
+                categories = catSnapshot.docs.map(doc => doc.data().name);
+                
+                categories.forEach(cat => {
+                    filterSelect.innerHTML += `<option value="${cat}">${cat}</option>`;
+                    formSelect.innerHTML += `<option value="${cat}">${cat}</option>`;
+                });
+
+                if (categories.length === 0) {
+                    formSelect.innerHTML = `<option value="">(Veuillez créer une catégorie dans Paramètres)</option>`;
+                }
+
+                await loadProducts();
+                setTimeout(() => document.getElementById('global-loader').classList.add('hidden'), 400);
+            } catch (error) {
+                console.error(error);
+                window.showToast("Erreur de connexion au serveur", "error");
+            }
+        }
+
+        async function loadProducts() {
+            const prodSnapshot = await getDocs(collection(db, "products"));
+            products = prodSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderTable();
+            updateKPIs();
+        }
+
+        function updateKPIs() {
+            let totalValue = 0;
+            let emptyStock = 0;
+
+            products.forEach(p => {
+                if(p.stock > 0) {
+                    const salePrice = p.price || 0;
+                    totalValue += (salePrice * p.stock);
+                } else {
+                    emptyStock += 1;
+                }
+            });
+
+            document.getElementById('kpi-stock-value').innerText = formatMoney(totalValue);
+            document.getElementById('kpi-stock-empty').innerText = emptyStock;
+        }
+
+        // AFFICHAGE TABLEAU & ÉTAT VIDE
+        function renderTable() {
+            const tableWrapper = document.getElementById('table-wrapper');
+            const tbody = document.getElementById('products-table-body');
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const selectedCat = document.getElementById('category-filter').value;
+            
+            if (products.length === 0) {
+                tableWrapper.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-boxes"></i>
+                        <h3>Catalogue Vierge</h3>
+                        <p>Votre inventaire est vide. Cliquez sur le bouton "Ajouter au Catalogue" pour créer votre première fiche produit.</p>
+                        <button class="btn-add-empty" onclick="window.openProductModal()"><i class="fas fa-plus"></i> Créer le premier produit</button>
+                    </div>
+                `;
+                return;
+            }
+
+            if (!document.querySelector('table')) {
+                tableWrapper.innerHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:70px;">Image</th>
+                                <th>Fiche Produit</th>
+                                <th>Tarification & Marge</th>
+                                <th>Disponibilité</th>
+                                <th style="width:100px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-table-body"></tbody>
+                    </table>
+                `;
+            }
+
+            const currentTbody = document.getElementById('products-table-body');
+            currentTbody.innerHTML = '';
+
+            let filtered = products.filter(p => {
+                const searchStr = (p.name + " " + (p.barcode || "")).toLowerCase();
+                const matchSearch = searchStr.includes(searchTerm);
+                const matchCat = selectedCat === 'Tout' || p.category === selectedCat;
+                return matchSearch && matchCat;
+            });
+
+            if(filtered.length === 0 && products.length > 0) {
+                currentTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 3rem; color: var(--text-muted);"><i class="fas fa-search" style="font-size:2rem; opacity:0.3; margin-bottom:10px; display:block;"></i>Aucun produit ne correspond à vos critères.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(product => {
+                const isLowStock = product.stock <= 5;
+                const stockClass = isLowStock ? 'stock-low' : 'stock-good';
+                const stockIcon = isLowStock ? 'fa-exclamation-triangle' : 'fa-check-circle';
+                const stockText = product.stock > 0 ? `${product.stock} Unités` : 'Rupture';
+
+                let imageHtml = `<div class="product-img"><i class="fas ${product.icon || 'fa-box'}"></i></div>`;
+                if(product.imageUrl) {
+                    imageHtml = `<div class="product-img"><img src="${product.imageUrl}" alt="${product.name}" loading="lazy"></div>`;
+                }
+
+                const barcodeHtml = product.barcode ? `<span class="product-barcode"><i class="fas fa-barcode"></i> ${product.barcode}</span>` : '';
+                
+                // Calculs financiers pour l'affichage
+                const purchase = product.purchasePrice || 0;
+                const sale = product.price || 0;
+                const profit = sale - purchase;
+                const badgeProfitClass = profit >= 0 ? 'badge-profit' : 'badge-loss';
+                const sign = profit >= 0 ? '+' : '';
+
+                currentTbody.innerHTML += `
+                    <tr>
+                        <td class="product-img-cell">${imageHtml}</td>
+                        <td>
+                            <span class="product-name">${product.name}</span>
+                            ${barcodeHtml}
+                            <span class="badge-category">${product.category}</span>
+                        </td>
+                        <td>
+                            <div class="finance-details">
+                                <div class="finance-line buy"><span>Achat:</span> <span>${formatMoney(purchase)}</span></div>
+                                <div class="finance-line sell"><span>Vente:</span> <span>${formatMoney(sale)}</span></div>
+                                <div><span class="${badgeProfitClass}">Bénéfice: ${sign}${formatMoney(profit)}</span></div>
+                            </div>
+                        </td>
+                        <td><span class="stock-status ${stockClass}"><i class="fas ${stockIcon}"></i> ${stockText}</span></td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn-action-sm btn-edit" title="Modifier la fiche" onclick="window.editProduct('${product.id}')"><i class="fas fa-pen"></i></button>
+                                <button class="btn-action-sm btn-delete" title="Retirer du catalogue" onclick="window.deleteProduct('${product.id}', '${product.name.replace(/'/g, "\\'")}')"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        document.getElementById('search-input').addEventListener('input', renderTable);
+        document.getElementById('category-filter').addEventListener('change', renderTable);
+
+        // GESTION UPLOAD IMAGE
+        document.getElementById('product-image-input').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const progressText = document.getElementById('upload-progress');
+            progressText.style.display = 'block';
+            document.getElementById('btn-save-product').disabled = true;
+
+            try {
+                const storageRef = ref(storage, `products/roger_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`);
+                const snapshot = await uploadBytes(storageRef, file);
+                const downloadURL = await getDownloadURL(snapshot.ref);
+                
+                document.getElementById('product-image-url').value = downloadURL;
+                document.getElementById('img-preview-box').innerHTML = `<img src="${downloadURL}">`;
+                
+                progressText.style.color = 'var(--success)';
+                progressText.innerText = 'Image chargée !';
+            } catch (error) {
+                console.error("Erreur Upload :", error);
+                window.showToast("Échec du chargement de l'image.", "error");
+                progressText.style.color = 'var(--danger)';
+                progressText.innerText = 'Échec.';
+            } finally {
+                document.getElementById('btn-save-product').disabled = false;
+                setTimeout(() => progressText.style.display = 'none', 3000);
+            }
+        });
+
+        // CALCUL DU BÉNÉFICE EN TEMPS RÉEL (Modal)
+        window.calcProfit = () => {
+            const purchase = parseInt(document.getElementById('product-purchase').value) || 0;
+            const sale = parseInt(document.getElementById('product-price').value) || 0;
+            const profit = sale - purchase;
+            const margin = sale > 0 ? ((profit / sale) * 100).toFixed(1) : 0;
+            
+            const display = document.getElementById('profit-display');
+            display.innerText = `${formatMoney(profit)} (${margin}%)`;
+            display.style.color = profit >= 0 ? 'var(--success)' : 'var(--danger)';
+        };
+
+        // --- GESTION DU SCANNER DE CODE-BARRES ---
+        window.startScanner = () => {
+            document.getElementById('scanner-modal').classList.remove('hidden');
+            html5QrCode = new Html5Qrcode("reader");
+            
+            const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+            
+            html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+                document.getElementById('product-barcode').value = decodedText;
+                window.stopScanner();
+                window.showToast("Code scanné avec succès !");
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            }).catch(err => {
+                console.warn("Erreur scanner:", err);
+            });
+        };
+
+        window.stopScanner = () => {
+            if(html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                    document.getElementById('scanner-modal').classList.add('hidden');
+                }).catch(err => {
+                    console.log("Erreur fermeture scanner", err);
+                    document.getElementById('scanner-modal').classList.add('hidden');
+                });
+            } else {
+                document.getElementById('scanner-modal').classList.add('hidden');
+            }
+        };
+
+        // GESTION MODAL PRODUIT
+        window.openProductModal = () => {
+            if(categories.length === 0) {
+                return window.showToast("Vous devez d'abord créer une catégorie dans les Paramètres.", "warning");
+            }
+            
+            document.getElementById('product-form').reset();
+            document.getElementById('product-id').value = '';
+            document.getElementById('product-image-url').value = '';
+            document.getElementById('img-preview-box').innerHTML = '<i class="fas fa-image"></i>';
+            window.calcProfit();
+            
+            document.getElementById('modal-title').innerText = 'Créer une Fiche Produit';
+            document.getElementById('product-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('product-name').focus(), 100);
+        };
+
+        window.closeProductModal = () => document.getElementById('product-modal').classList.add('hidden');
+
+        window.editProduct = (id) => {
+            const product = products.find(p => p.id === id);
+            if(product) {
+                document.getElementById('product-id').value = product.id;
+                document.getElementById('product-name').value = product.name;
+                document.getElementById('product-barcode').value = product.barcode || '';
+                document.getElementById('product-category').value = product.category;
+                document.getElementById('product-purchase').value = product.purchasePrice || 0;
+                document.getElementById('product-price').value = product.price || 0;
+                document.getElementById('product-stock').value = product.stock;
+                
+                document.getElementById('product-image-url').value = product.imageUrl || '';
+                
+                if(product.imageUrl) {
+                    document.getElementById('img-preview-box').innerHTML = `<img src="${product.imageUrl}">`;
+                } else {
+                    document.getElementById('img-preview-box').innerHTML = `<i class="fas ${product.icon || 'fa-box'}"></i>`;
+                }
+                
+                window.calcProfit();
+                
+                document.getElementById('modal-title').innerText = 'Modifier le Produit';
+                document.getElementById('product-modal').classList.remove('hidden');
+            }
+        };
+
+        // SAUVEGARDE FIRESTORE
+        window.saveProduct = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-save-product');
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Traitement...';
+            btn.disabled = true;
+
+            const id = document.getElementById('product-id').value;
+            const productData = {
+                name: document.getElementById('product-name').value.trim(),
+                barcode: document.getElementById('product-barcode').value.trim(),
+                category: document.getElementById('product-category').value,
+                purchasePrice: parseInt(document.getElementById('product-purchase').value) || 0,
+                price: parseInt(document.getElementById('product-price').value) || 0,
+                stock: parseInt(document.getElementById('product-stock').value) || 0,
+                imageUrl: document.getElementById('product-image-url').value
+            };
+
+            if(!productData.imageUrl) {
+                productData.icon = 'fa-box';
+            }
+
+            try {
+                if(id) {
+                    await updateDoc(doc(db, "products", id), productData);
+                    window.showToast("Fiche produit mise à jour !");
+                } else {
+                    await addDoc(collection(db, "products"), productData);
+                    window.showToast("Produit intégré au catalogue !");
+                }
+                
+                window.closeProductModal();
+                await loadProducts();
+            } catch (error) {
+                console.error(error);
+                window.showToast("Erreur serveur lors de l'enregistrement", "error");
+            } finally {
+                btn.innerHTML = 'Sauvegarder la fiche';
+                btn.disabled = false;
+            }
+        };
+
+        // SUPPRESSION FIRESTORE
+        window.deleteProduct = async (id, name) => {
+            if(confirm(`⚠️ Voulez-vous retirer définitivement "${name}" du catalogue ?`)) {
+                try {
+                    await deleteDoc(doc(db, "products", id));
+                    window.showToast("Produit supprimé", "warning");
+                    await loadProducts();
+                } catch (error) {
+                    console.error(error);
+                    window.showToast("Échec de la suppression", "error");
+                }
+            }
+        };
+
+        window.toggleFullScreen = () => {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+            else if (document.exitFullscreen) document.exitFullscreen();
+        };
+
+        initData();
+
+    </script>
+</body>
+</html>

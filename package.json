@@ -1,0 +1,17 @@
+{
+  "name": "roger-service-pro",
+  "version": "1.0.0",
+  "description": "Application de gestion pour Roger Service Pro",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --arm64"
+  },
+  "author": "Thierry Joël Yougma",
+  "build": {
+    "appId": "com.agi.rogerservice",
+    "win": {
+      "target": "nsis"
+    }
+  }
+}

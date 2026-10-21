@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roger Service Pro - Paramètres Système</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- DESIGN SYSTEM PREMIUM --- */
+        :root {
+            --primary: #4f46e5; 
+            --primary-hover: #4338ca;
+            --secondary: #0f172a; 
+            --secondary-light: #1e293b;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --success-hover: #059669;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --warning: #f59e0b;
+            --border: #e2e8f0;
+            
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --radius-md: 10px;
+            --radius-lg: 16px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        
+        /* GESTION DE L'ÉCRAN (Empêche le menu de disparaître) */
+        body { 
+            display: flex; 
+            height: 100vh; 
+            width: 100vw;
+            background-color: var(--background); 
+            color: var(--text-main); 
+            overflow: hidden; 
+            -webkit-font-smoothing: antialiased; 
+        }
+        
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 20px; }
+
+        button { cursor: pointer; border: none; outline: none; font-weight: 600; transition: all 0.2s ease; }
+        .btn-icon { background: none; font-size: 1.2rem; color: var(--text-muted); padding: 8px; border-radius: 50%; }
+        .btn-icon:hover { color: var(--primary); background: #eff6ff; }
+        
+        /* --- SIDEBAR PREMIUM (VERROUILLÉE) --- */
+        .sidebar { 
+            width: 250px; 
+            min-width: 250px; 
+            flex-shrink: 0;   
+            background: linear-gradient(180deg, var(--secondary) 0%, var(--secondary-light) 100%); 
+            color: white; 
+            display: flex !important; 
+            flex-direction: column; 
+            padding: 2rem 1.2rem; 
+            z-index: 10; 
+            box-shadow: 4px 0 15px rgba(0,0,0,0.05); 
+            overflow-y: auto; 
+        }
+        .brand h2 { font-size: 1.3rem; font-weight: 800; display: flex; align-items: center; gap: 12px; margin-bottom: 3rem; letter-spacing: -0.5px; }
+        .brand h2 i { color: #818cf8; font-size: 1.5rem; }
+        .nav-links { list-style: none; flex: 1; display: flex; flex-direction: column; gap: 5px; }
+        .nav-links li { padding: 0.9rem 1.2rem; border-radius: var(--radius-md); display: flex; align-items: center; gap: 15px; color: #94a3b8; cursor: pointer; transition: 0.3s; font-weight: 500; font-size: 0.9rem; }
+        .nav-links li i { font-size: 1.1rem; width: 20px; text-align: center; }
+        .nav-links li:hover { background-color: rgba(255,255,255,0.05); color: white; }
+        .nav-links li.active { background-color: var(--primary); color: white; box-shadow: var(--shadow-md); }
+        .user-info { display: flex; align-items: center; gap: 12px; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.9rem; color: #e2e8f0; font-weight: 500; margin-top: 1rem; }
+        .user-info i { font-size: 1.8rem; color: #818cf8; }
+        
+        /* Style de la photo de profil administrateur */
+        .admin-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #818cf8;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            background-color: #fff;
+        }
+
+        /* --- MAIN CONTENT & HEADER --- */
+        .main-content { 
+            flex: 1; 
+            min-width: 0; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            position: relative; 
+            overflow-x: auto;
+        }
+        .top-header { background: var(--surface); padding: 1.2rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); box-shadow: var(--shadow-sm); z-index: 10; }
+        .datetime { font-weight: 600; color: var(--text-muted); font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+        
+        /* LOADER PREMIUM */
+        #global-loader { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.95); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; backdrop-filter: blur(5px); }
+        .loader-brand { font-size: 1.5rem; font-weight: 800; color: var(--secondary); letter-spacing: -0.5px; margin-bottom: 10px; }
+        .spinner { border: 4px solid var(--border); border-top: 4px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+        .loader-text { font-weight: 600; color: var(--text-muted); font-size: 1rem; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hidden { display: none !important; opacity: 0; pointer-events: none; }
+
+        /* --- STYLES SPÉCIFIQUES PAGE PARAMÈTRES --- */
+        .settings-container { padding: 2rem; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 2rem; min-width: 800px; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+        .page-title { font-size: 1.8rem; font-weight: 800; color: var(--secondary); letter-spacing: -0.5px; }
+        
+        .grid-layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 2rem; align-items: start; }
+        .column { display: flex; flex-direction: column; gap: 2rem; }
+        
+        /* CARTES DE PARAMÈTRES PREMIUM */
+        .settings-card { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border); overflow: hidden; transition: 0.3s; }
+        .settings-card:hover { box-shadow: var(--shadow-md); }
+        .card-header { padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border); background: #f8fafc; font-weight: 800; color: var(--secondary); display: flex; align-items: center; gap: 12px; font-size: 1.1rem; letter-spacing: -0.2px; }
+        .card-header i { color: var(--primary); font-size: 1.2rem; }
+        .card-body { padding: 2rem; display: flex; flex-direction: column; gap: 1.2rem; }
+        
+        /* FORMULAIRES PREMIUM */
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        .form-group label { font-size: 0.85rem; font-weight: 700; color: var(--secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group input, .form-group textarea { padding: 0.9rem 1.2rem; border: 1px solid var(--border); border-radius: var(--radius-md); outline: none; font-size: 1rem; color: var(--text-main); background: white; transition: 0.3s; font-weight: 500; }
+        .form-group input:focus, .form-group textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+        .form-group textarea { resize: vertical; min-height: 100px; line-height: 1.5; }
+        
+        .btn-save { padding: 1rem 2rem; background: var(--primary); color: white; border-radius: var(--radius-md); font-weight: 700; align-self: flex-start; margin-top: 10px; box-shadow: var(--shadow-sm); display: flex; align-items: center; gap: 10px; letter-spacing: 0.5px; transition: 0.2s; }
+        .btn-save:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .btn-save:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* LISTE CATÉGORIES PREMIUM */
+        .add-category-bar { display: flex; gap: 12px; margin-bottom: 20px; }
+        .add-category-bar input { flex: 1; padding: 1rem 1.2rem; border: 1px solid var(--border); border-radius: var(--radius-md); outline: none; font-size: 0.95rem; font-weight: 500; transition: 0.3s; }
+        .add-category-bar input:focus { border-color: var(--success); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
+        .add-category-bar button { padding: 1rem 1.5rem; background: var(--success); color: white; border-radius: var(--radius-md); font-weight: 700; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-sm); transition: 0.2s; }
+        .add-category-bar button:hover { background: var(--success-hover); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+        .add-category-bar button:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; box-shadow: none; }
+        
+        .category-list { list-style: none; display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; padding-right: 5px; }
+        .category-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.2rem; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); transition: 0.2s; }
+        .category-item:hover { border-color: #cbd5e1; background: #f1f5f9; }
+        .category-item span { font-weight: 700; color: var(--secondary); display: flex; align-items: center; gap: 10px; }
+        .category-item span i { color: var(--primary); opacity: 0.7; }
+        .btn-delete-cat { color: var(--danger); background: #fee2e2; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; opacity: 0.8; transition: 0.2s; }
+        .btn-delete-cat:hover { opacity: 1; background: var(--danger); color: white; transform: scale(1.05); }
+        .btn-delete-cat:disabled { opacity: 0.4; cursor: not-allowed; transform: none; background: #f1f5f9; color: var(--text-muted); }
+
+        /* CARTE SYSTÈME PREMIUM */
+        .system-info { display: flex; flex-direction: column; gap: 15px; }
+        .sys-line { display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px dashed var(--border); font-size: 0.95rem; }
+        .sys-line:last-child { border-bottom: none; padding-bottom: 0; }
+        .sys-label { color: var(--text-muted); font-weight: 600; }
+        .sys-value { color: var(--secondary); font-weight: 800; display: flex; align-items: center; gap: 8px; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); display: inline-block; box-shadow: 0 0 8px var(--success); }
+
+        /* BOUTONS D'ACTIONS SYSTÈME */
+        .system-actions { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-sync { flex: 1; padding: 0.9rem; border-radius: var(--radius-md); font-weight: 700; text-align: center; border: 1px solid var(--border); background: white; color: var(--secondary); transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-sync:hover { background: #f1f5f9; border-color: #cbd5e1; }
+        .btn-danger-action { flex: 1; padding: 0.9rem; border-radius: var(--radius-md); font-weight: 700; text-align: center; border: 1px solid #fecaca; background: #fef2f2; color: var(--danger); transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-danger-action:hover { background: var(--danger); color: white; }
+
+        /* --- TOASTS --- */
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; }
+        .toast { padding: 1.2rem 1.5rem; border-radius: var(--radius-md); background: white; color: var(--secondary); font-weight: 600; font-size: 0.95rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 15px; transform: translateX(120%); animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards, slideOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards 3.5s; border-left: 6px solid; }
+        .toast.success { border-color: var(--success); } .toast.error { border-color: var(--danger); } .toast.warning { border-color: var(--warning); }
+        .toast i { font-size: 1.5rem; } .toast.success i { color: var(--success); } .toast.error i { color: var(--danger); } .toast.warning i { color: var(--warning); }
+        @keyframes slideIn { to { transform: translateX(0); } } @keyframes slideOut { to { transform: translateX(120%); opacity: 0; margin-top: -60px; } }
+
+    </style>
+</head>
+<body>
+
+    <div id="toast-container"></div>
+
+    <nav class="sidebar">
+        <div class="brand"><h2><i class="fas fa-store"></i> ROGER PRO</h2></div>
+        <ul class="nav-links">
+            <li onclick="window.location.href='index.html'"><i class="fas fa-cash-register"></i> Point de Vente</li>
+            <li onclick="window.location.href='stocks.html'"><i class="fas fa-boxes"></i> Stocks</li>
+            <li onclick="window.location.href='clients.html'"><i class="fas fa-users"></i> Clients</li>
+            <li onclick="window.location.href='rapports.html'"><i class="fas fa-chart-bar"></i> Rapports</li>
+            <li onclick="window.location.href='fournisseurs.html'"><i class="fas fa-truck"></i> Fournisseurs</li>
+            <li onclick="window.location.href='depenses.html'"><i class="fas fa-wallet"></i> Dépenses</li>
+            <li onclick="window.location.href='employes.html'"><i class="fas fa-user-shield"></i> Employés</li>
+            <li onclick="window.location.href='paie.html'"><i class="fas fa-file-invoice-dollar"></i> Paie & Salaires</li>
+            <li onclick="window.location.href='commandes.html'"><i class="fas fa-clipboard-list"></i> Commandes</li>
+            <li class="active" onclick="window.location.href='parametres.html'"><i class="fas fa-cog"></i> Paramètres</li>
+        </ul>
+        <div class="user-info">
+            <!-- Remplacement de l'icône par l'image de profil -->
+            <img src="https://i.imgur.com/zbAQtQX.jpeg" alt="Adama D. Gnoumou" class="admin-avatar">
+            <div>
+                <span style="display:block; font-size:0.75rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px;">Administrateur</span>
+                <span style="font-weight:700; color:white; font-size:1rem;">Adama D. Gnoumou</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div id="global-loader">
+            <div class="spinner"></div>
+            <div class="loader-brand">DATIEN & FILS ERP</div>
+            <span class="loader-text">Chargement des configurations...</span>
+        </div>
+
+        <header class="top-header">
+            <div class="datetime" id="current-datetime"><i class="far fa-clock"></i> <span>Chargement...</span></div>
+            <div class="top-actions">
+                <button class="btn-icon" title="Plein écran" onclick="window.toggleFullScreen()"><i class="fas fa-expand"></i></button>
+            </div>
+        </header>
+
+        <div class="settings-container">
+            <div class="page-header">
+                <h1 class="page-title">Configuration Système & Maintenance</h1>
+            </div>
+
+            <div class="grid-layout">
+                <!-- COLONNE GAUCHE (Boutique & Système) -->
+                <div class="column">
+                    
+                    <!-- INFOS BOUTIQUE -->
+                    <div class="settings-card">
+                        <div class="card-header"><i class="fas fa-store-alt"></i> Identité de l'Entité Commerciale</div>
+                        <div class="card-body">
+                            <form id="store-form" onsubmit="window.saveStoreSettings(event)">
+                                <div class="form-group">
+                                    <label>Raison Sociale / Nom Boutique</label>
+                                    <input type="text" id="store-name" required placeholder="Ex: Datien & Fils">
+                                </div>
+                                <div class="form-group">
+                                    <label>Contact Téléphonique Officiel</label>
+                                    <input type="tel" id="store-phone" placeholder="Ex: +226 70 00 00 00">
+                                </div>
+                                <div class="form-group">
+                                    <label>Localisation Géographique (Siège)</label>
+                                    <input type="text" id="store-address" placeholder="Ex: Secteur 4, Houndé">
+                                </div>
+                                <div class="form-group">
+                                    <label>Mentions Légales (Ticket de caisse)</label>
+                                    <textarea id="store-receipt-msg" placeholder="Texte imprimé au bas de chaque reçu (ex: Les marchandises vendues ne sont ni reprises ni échangées)"></textarea>
+                                </div>
+                                <button type="submit" class="btn-save" id="btn-save-store">
+                                    <i class="fas fa-check-double"></i> Enregistrer les modifications
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- INFOS SYSTÈME ET MAINTENANCE -->
+                    <div class="settings-card">
+                        <div class="card-header"><i class="fas fa-server"></i> Sécurité & Cloud Atlas</div>
+                        <div class="card-body system-info">
+                            <div class="sys-line">
+                                <span class="sys-label">Licence Logicielle</span>
+                                <span class="sys-value" style="color:var(--primary)"><i class="fas fa-shield-alt"></i> Atlas & Duc Corp.</span>
+                            </div>
+                            <div class="sys-line">
+                                <span class="sys-label">Version Déploiement</span>
+                                <span class="sys-value">ERP Industriel V.2.1</span>
+                            </div>
+                            <div class="sys-line">
+                                <span class="sys-label">Base de données cloud</span>
+                                <span class="sys-value"><span class="status-dot"></span> Active (roger-db)</span>
+                            </div>
+                            <div class="sys-line">
+                                <span class="sys-label">Dernière synchronisation</span>
+                                <span class="sys-value" id="last-sync-time">À l'instant</span>
+                            </div>
+                            
+                            <div class="system-actions">
+                                <button class="btn-sync" onclick="window.forceSync()">
+                                    <i class="fas fa-sync-alt"></i> Synchroniser
+                                </button>
+                                <button class="btn-danger-action" onclick="window.clearCache()">
+                                    <i class="fas fa-broom"></i> Vider le Cache
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- COLONNE DROITE (Catégories) -->
+                <div class="column">
+                    
+                    <!-- GESTION DES CATÉGORIES -->
+                    <div class="settings-card">
+                        <div class="card-header"><i class="fas fa-tags"></i> Taxonomie du Catalogue (Catégories)</div>
+                        <div class="card-body">
+                            <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">
+                                <i class="fas fa-info-circle"></i> Le système empêche la suppression d'une catégorie si elle est actuellement utilisée par des produits en stock.
+                            </div>
+                            <form class="add-category-bar" onsubmit="window.addCategory(event)">
+                                <input type="text" id="new-category-input" placeholder="Créer une nouvelle famille..." required>
+                                <button type="submit" id="btn-add-cat"><i class="fas fa-plus"></i> Ajouter</button>
+                            </form>
+                            
+                            <ul class="category-list" id="category-list">
+                                <!-- Liste générée dynamiquement -->
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- SCRIPT FIREBASE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, doc, setDoc, getDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // CONFIGURATION ATLAS & DUC
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOExj8-x4KjGIQi2ewzU7LQP302l9pZrU",
+            authDomain: "atlasgroupebusiness.firebaseapp.com",
+            databaseURL: "https://atlasgroupebusiness-default-rtdb.firebaseio.com",
+            projectId: "atlasgroupebusiness",
+            storageBucket: "atlasgroupebusiness.firebasestorage.app",
+            messagingSenderId: "876963848028",
+            appId: "1:876963848028:web:89a37065ded7b60c1c6b99"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        
+        // CONNEXION À LA BASE NATIF PRÉCISE
+        const db = getFirestore(app, "roger-db");
+
+        // TOAST PREMIUM
+        window.showToast = (msg, type = 'success') => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icon = type === 'error' ? 'fa-exclamation-circle' : type === 'warning' ? 'fa-exclamation-triangle' : 'fa-check-circle';
+            toast.innerHTML = `<i class="fas ${icon}"></i> <span>${msg}</span>`;
+            container.appendChild(toast);
+            if (navigator.vibrate) navigator.vibrate(50);
+            setTimeout(() => { if(toast.parentElement) toast.remove(); }, 3500);
+        };
+
+        // HORLOGE
+        setInterval(() => {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            document.getElementById('current-datetime').innerHTML = `<i class="far fa-clock"></i> <span>${now.toLocaleDateString('fr-FR', options)}</span>`;
+        }, 1000);
+
+        // INITIALISATION
+        async function initData() {
+            try {
+                // 1. Infos de la boutique
+                const storeRef = doc(db, "settings", "store_info");
+                const storeSnap = await getDoc(storeRef);
+                
+                if (storeSnap.exists()) {
+                    const data = storeSnap.data();
+                    document.getElementById('store-name').value = data.name || '';
+                    document.getElementById('store-phone').value = data.phone || '';
+                    document.getElementById('store-address').value = data.address || '';
+                    document.getElementById('store-receipt-msg').value = data.receiptMessage || '';
+                }
+
+                // 2. Catégories
+                await loadCategories();
+
+                // MAJ de l'heure de synchro
+                const now = new Date();
+                document.getElementById('last-sync-time').innerText = now.toLocaleTimeString('fr-FR');
+
+                setTimeout(() => {
+                    document.getElementById('global-loader').classList.add('hidden');
+                }, 400);
+            } catch (error) {
+                console.error(error);
+                window.showToast("Erreur de connexion au serveur Cloud Atlas", "error");
+            }
+        }
+
+        // SAUVEGARDE INFOS BOUTIQUE
+        window.saveStoreSettings = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-save-store');
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Mise à jour réseau...';
+            btn.disabled = true;
+
+            const storeData = {
+                name: document.getElementById('store-name').value.trim(),
+                phone: document.getElementById('store-phone').value.trim(),
+                address: document.getElementById('store-address').value.trim(),
+                receiptMessage: document.getElementById('store-receipt-msg').value.trim()
+            };
+
+            try {
+                await setDoc(doc(db, "settings", "store_info"), storeData, { merge: true });
+                window.showToast("Configuration commerciale mise à jour avec succès !");
+            } catch (error) {
+                console.error(error);
+                window.showToast("Échec de la sauvegarde sur le serveur", "error");
+            } finally {
+                btn.innerHTML = '<i class="fas fa-check-double"></i> Enregistrer les modifications';
+                btn.disabled = false;
+            }
+        };
+
+        // GESTION CATÉGORIES
+        async function loadCategories() {
+            const list = document.getElementById('category-list');
+            list.innerHTML = '';
+            
+            const snapshot = await getDocs(collection(db, "categories"));
+            
+            if (snapshot.empty) {
+                list.innerHTML = `
+                    <div style="padding: 3rem 1rem; text-align: center; border: 1px dashed var(--border); border-radius: var(--radius-md); background: var(--background);">
+                        <i class="fas fa-tags" style="font-size: 2.5rem; color: #cbd5e1; margin-bottom: 10px;"></i>
+                        <p style="color: var(--text-muted); font-weight: 500;">La taxonomie est vide.<br>Ajoutez votre première famille de produits ci-dessus.</p>
+                    </div>`;
+                return;
+            }
+
+            // Trier par ordre alphabétique pour un rendu pro
+            const categories = snapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
+            categories.sort((a, b) => a.name.localeCompare(b.name));
+
+            categories.forEach(cat => {
+                list.innerHTML += `
+                    <li class="category-item">
+                        <span><i class="fas fa-folder-open"></i> ${cat.name}</span>
+                        <button class="btn-delete-cat" id="del-btn-${cat.id}" title="Supprimer la famille" onclick="window.deleteCategory('${cat.id}', '${cat.name.replace(/'/g, "\\'")}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </li>
+                `;
+            });
+        }
+
+        window.addCategory = async (e) => {
+            e.preventDefault();
+            const input = document.getElementById('new-category-input');
+            const catName = input.value.trim();
+            const btn = document.getElementById('btn-add-cat');
+            
+            if(!catName) return;
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+
+            try {
+                // Vérifier si la catégorie existe déjà (Sensibilité à la casse)
+                const q = query(collection(db, "categories"), where("name", "==", catName));
+                const querySnapshot = await getDocs(q);
+
+                if (!querySnapshot.empty) {
+                    window.showToast(`La famille "${catName}" existe déjà dans le système.`, "warning");
+                } else {
+                    await addDoc(collection(db, "categories"), { name: catName });
+                    window.showToast(`Famille "${catName}" créée avec succès !`);
+                    input.value = '';
+                    await loadCategories();
+                }
+            } catch (error) {
+                console.error(error);
+                window.showToast("Erreur lors de la création", "error");
+            } finally {
+                btn.innerHTML = '<i class="fas fa-plus"></i> Ajouter';
+                btn.disabled = false;
+            }
+        };
+
+        // SUPPRESSION DE CATÉGORIE AVEC CONTRÔLE D'INTÉGRITÉ
+        window.deleteCategory = async (id, name) => {
+            const btn = document.getElementById(`del-btn-${id}`);
+            
+            if(confirm(`⚠️ AVERTISSEMENT SYSTÈME :\n\nÊtes-vous certain de vouloir supprimer la famille "${name}" ?`)) {
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                btn.disabled = true;
+
+                try {
+                    // CONTRÔLE D'INTÉGRITÉ INDUSTRIEL : Vérifier l'utilisation
+                    const q = query(collection(db, "products"), where("category", "==", name));
+                    const querySnapshot = await getDocs(q);
+
+                    if (!querySnapshot.empty) {
+                        // Blocage de sécurité
+                        window.showToast(`OPÉRATION REFUSÉE : ${querySnapshot.size} produit(s) utilisent actuellement cette famille.`, "error");
+                        btn.innerHTML = '<i class="fas fa-trash"></i>';
+                        btn.disabled = false;
+                        return;
+                    }
+
+                    // Suppression autorisée
+                    await deleteDoc(doc(db, "categories", id));
+                    window.showToast(`Famille "${name}" supprimée de l'architecture.`, "success");
+                    await loadCategories();
+
+                } catch (error) {
+                    console.error(error);
+                    window.showToast("Échec de la vérification de sécurité", "error");
+                    btn.innerHTML = '<i class="fas fa-trash"></i>';
+                    btn.disabled = false;
+                }
+            }
+        };
+
+        // ACTIONS SYSTÈME MANUELLES
+        window.forceSync = async () => {
+            const btn = document.querySelector('.btn-sync');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Synchronisation...';
+            
+            try {
+                // Recharger les données simule une synchro pour l'UI
+                await initData();
+                window.showToast("Bases de données synchronisées avec Atlas Cloud.");
+            } catch (e) {
+                window.showToast("Échec de la synchronisation réseau", "error");
+            } finally {
+                btn.innerHTML = originalHTML;
+            }
+        };
+
+        window.clearCache = () => {
+            if(confirm("Le vidage du cache local va rafraîchir l'application. Aucune donnée cloud ne sera perdue. Continuer ?")) {
+                window.showToast("Purge du cache... Redémarrage de l'interface.");
+                setTimeout(() => {
+                    window.location.reload(true);
+                }, 1500);
+            }
+        };
+
+        window.toggleFullScreen = () => {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+            else if (document.exitFullscreen) document.exitFullscreen();
+        };
+
+        // Démarrage de l'application
+        initData();
+
+    </script>
+</body>
+</html>

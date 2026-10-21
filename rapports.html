@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roger Service Pro - Analytics & Rapports</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- DESIGN SYSTEM PREMIUM --- */
+        :root {
+            --primary: #4f46e5; 
+            --primary-hover: #4338ca;
+            --secondary: #0f172a; 
+            --secondary-light: #1e293b;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --success-hover: #059669;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --border: #e2e8f0;
+            
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --radius-md: 10px;
+            --radius-lg: 16px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        
+        /* GESTION DE L'ÉCRAN (Empêche le menu de disparaître) */
+        body { 
+            display: flex; 
+            height: 100vh; 
+            width: 100vw;
+            background-color: var(--background); 
+            color: var(--text-main); 
+            overflow: hidden; 
+            -webkit-font-smoothing: antialiased; 
+        }
+        
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 20px; }
+
+        button { cursor: pointer; border: none; outline: none; font-weight: 600; transition: all 0.2s ease; }
+        .btn-icon { background: none; font-size: 1.2rem; color: var(--text-muted); padding: 8px; border-radius: 50%; }
+        .btn-icon:hover { color: var(--primary); background: #eff6ff; }
+        
+        /* --- SIDEBAR PREMIUM (VERROUILLÉE) --- */
+        .sidebar { 
+            width: 250px; 
+            min-width: 250px; 
+            flex-shrink: 0;   
+            background: linear-gradient(180deg, var(--secondary) 0%, var(--secondary-light) 100%); 
+            color: white; 
+            display: flex !important; 
+            flex-direction: column; 
+            padding: 2rem 1.2rem; 
+            z-index: 10; 
+            box-shadow: 4px 0 15px rgba(0,0,0,0.05); 
+            overflow-y: auto; 
+        }
+        .brand h2 { font-size: 1.3rem; font-weight: 800; display: flex; align-items: center; gap: 12px; margin-bottom: 3rem; letter-spacing: -0.5px; }
+        .brand h2 i { color: #818cf8; font-size: 1.5rem; }
+        .nav-links { list-style: none; flex: 1; display: flex; flex-direction: column; gap: 5px; }
+        .nav-links li { padding: 0.9rem 1.2rem; border-radius: var(--radius-md); display: flex; align-items: center; gap: 15px; color: #94a3b8; cursor: pointer; transition: 0.3s; font-weight: 500; font-size: 0.9rem; }
+        .nav-links li i { font-size: 1.1rem; width: 20px; text-align: center; }
+        .nav-links li:hover { background-color: rgba(255,255,255,0.05); color: white; }
+        .nav-links li.active { background-color: var(--primary); color: white; box-shadow: var(--shadow-md); }
+        .user-info { display: flex; align-items: center; gap: 12px; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.9rem; color: #e2e8f0; font-weight: 500; margin-top: 1rem; }
+        .user-info i { font-size: 1.8rem; color: #818cf8; }
+        
+        /* Style de la photo de profil administrateur */
+        .admin-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #818cf8;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            background-color: #fff;
+        }
+
+        /* --- MAIN CONTENT & HEADER --- */
+        .main-content { 
+            flex: 1; 
+            min-width: 0; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            position: relative; 
+            overflow-x: auto;
+        }
+        .top-header { background: var(--surface); padding: 1.2rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); box-shadow: var(--shadow-sm); z-index: 10; }
+        .datetime { font-weight: 600; color: var(--text-muted); font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+        
+        /* LOADER PREMIUM */
+        #global-loader { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.95); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; backdrop-filter: blur(5px); }
+        .loader-brand { font-size: 1.5rem; font-weight: 800; color: var(--secondary); letter-spacing: -0.5px; margin-bottom: 10px; }
+        .spinner { border: 4px solid var(--border); border-top: 4px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+        .loader-text { font-weight: 600; color: var(--text-muted); font-size: 1rem; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hidden { display: none !important; opacity: 0; pointer-events: none; }
+
+        /* --- PAGE RAPPORTS PREMIUM --- */
+        .reports-container { padding: 2rem; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 1.5rem; min-width: 900px; }
+        
+        .page-header { display: flex; justify-content: space-between; align-items: center; }
+        .page-title { font-size: 1.8rem; font-weight: 800; color: var(--secondary); letter-spacing: -0.5px; }
+        .btn-export { background: var(--secondary); color: white; padding: 0.8rem 1.5rem; border-radius: var(--radius-md); font-weight: 700; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-sm); transition: 0.2s; }
+        .btn-export:hover { background: var(--secondary-light); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+        /* KPI DASHBOARD */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+        .stat-card { background: var(--surface); padding: 1.5rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-md); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 15px; position: relative; overflow: hidden; }
+        .stat-card::after { content: ''; position: absolute; top: 0; left: 0; width: 5px; height: 100%; }
+        .stat-card.blue::after { background: var(--primary); }
+        .stat-card.green::after { background: var(--success); }
+        .stat-card.orange::after { background: var(--warning); }
+        .stat-card.purple::after { background: #8b5cf6; }
+        
+        .stat-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .stat-icon { width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+        .stat-card.blue .stat-icon { background: #eff6ff; color: var(--primary); }
+        .stat-card.green .stat-icon { background: #ecfdf5; color: var(--success); }
+        .stat-card.orange .stat-icon { background: #fffbeb; color: var(--warning); }
+        .stat-card.purple .stat-icon { background: #f5f3ff; color: #8b5cf6; }
+        
+        .stat-info p { font-size: 0.85rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-info h3 { font-size: 1.8rem; color: var(--secondary); font-weight: 900; letter-spacing: -0.5px; margin-top: 5px; }
+
+        /* BARRE DE FILTRES INDUSTRIELS */
+        .toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; background: var(--surface); padding: 1.2rem 1.5rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border); gap: 15px; }
+        
+        .quick-filters { display: flex; gap: 8px; flex-wrap: wrap; }
+        .filter-btn { padding: 0.6rem 1.2rem; background: var(--background); border: 1px solid var(--border); border-radius: 20px; font-size: 0.9rem; font-weight: 600; color: var(--text-muted); transition: 0.2s; }
+        .filter-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: var(--shadow-sm); }
+
+        .date-filter { display: flex; gap: 10px; align-items: center; }
+        .date-filter label { font-weight: 700; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; }
+        .date-input { padding: 0.6rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-md); outline: none; color: var(--text-main); font-weight: 500; font-size: 0.9rem; }
+        .date-input:focus { border-color: var(--primary); }
+        .btn-custom-filter { background: var(--secondary); color: white; padding: 0.6rem 1.2rem; border-radius: var(--radius-md); font-weight: 700; transition: 0.2s; }
+        .btn-custom-filter:hover { background: var(--secondary-light); transform: translateY(-1px); }
+
+        /* TABLEAU HISTORIQUE PREMIUM & ÉTAT VIDE */
+        .table-container { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); border: 1px solid var(--border); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        thead { background: #f8fafc; border-bottom: 2px solid var(--border); }
+        th { padding: 1.2rem 1.5rem; font-weight: 700; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); font-size: 0.95rem; vertical-align: middle; transition: background 0.2s; }
+        tbody tr:hover td { background: #f8fafc; }
+        
+        .date-cell { font-weight: 600; color: var(--text-muted); font-size: 0.9rem; }
+        .client-cell { font-weight: 700; color: var(--secondary); }
+        .amount-cell { font-weight: 800; color: var(--primary); font-size: 1.05rem; }
+        
+        .badge-pay { padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 6px; }
+        .pay-especes { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+        .pay-mobile { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+        .pay-credit { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+        .btn-view { color: var(--primary); background: #eff6ff; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 0.85rem; border: 1px solid transparent; transition: 0.2s; display: flex; align-items: center; gap: 6px; justify-content: center; }
+        .btn-view:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* ÉTAT VIDE ÉLÉGANT (Empty State) */
+        .empty-state { padding: 5rem 2rem; text-align: center; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; }
+        .empty-state i { font-size: 4rem; color: #cbd5e1; margin-bottom: 10px; }
+        .empty-state h3 { font-size: 1.5rem; color: var(--secondary); font-weight: 700; }
+        .empty-state p { font-size: 1rem; max-width: 450px; line-height: 1.5; margin-bottom: 10px; }
+        .empty-state .btn-go-pos { padding: 0.8rem 2rem; background: var(--primary); color: white; border-radius: var(--radius-md); font-weight: 700; font-size: 1rem; transition: 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: var(--shadow-sm); }
+        .empty-state .btn-go-pos:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+        /* MODAL DÉTAIL TICKET (Simili Impression Thermique) */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 1; transition: 0.3s; backdrop-filter: blur(5px); }
+        .modal-content { background: var(--background); width: 400px; border-radius: 0; display: flex; flex-direction: column; overflow: hidden; transform: scale(1); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid #e2e8f0; }
+        .modal.hidden { opacity: 0; pointer-events: none; }
+        .modal.hidden .modal-content { transform: scale(0.95) translateY(20px); }
+        
+        .receipt-wrapper { background: white; padding: 2rem; font-family: 'Courier New', Courier, monospace; color: black; box-shadow: inset 0 0 20px rgba(0,0,0,0.02); }
+        .receipt-header-info { text-align: center; margin-bottom: 20px; border-bottom: 2px dashed #94a3b8; padding-bottom: 15px; }
+        .receipt-header-info h2 { font-size: 1.3rem; margin: 0 0 5px 0; font-weight: 800; font-family: 'Inter', sans-serif;}
+        .receipt-list { list-style: none; margin-bottom: 20px; padding: 0; font-size: 0.95rem; }
+        .receipt-list li { display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px dotted #e2e8f0; padding-bottom: 4px; }
+        .receipt-totals { border-top: 2px dashed #94a3b8; padding-top: 15px; font-size: 0.95rem; }
+        .receipt-totals .line { display: flex; justify-content: space-between; margin-bottom: 5px; font-weight: bold; }
+        
+        .modal-footer { padding: 1.5rem; border-top: 1px dashed var(--border); background: var(--background); display: flex; justify-content: center; }
+        .btn-close-modal { padding: 0.8rem 2rem; background: var(--secondary); color: white; border-radius: var(--radius-md); font-weight: 700; width: 100%; box-shadow: var(--shadow-sm); display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
+        .btn-close-modal:hover { background: var(--secondary-light); transform: translateY(-1px); }
+
+        /* TOASTS */
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; }
+        .toast { padding: 1.2rem 1.5rem; border-radius: var(--radius-md); background: white; color: var(--secondary); font-weight: 600; font-size: 0.95rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 15px; transform: translateX(120%); animation: slideIn 0.4s forwards, slideOut 0.4s forwards 3.5s; border-left: 6px solid; }
+        .toast.success { border-color: var(--success); } .toast.error { border-color: var(--danger); }
+        .toast i { font-size: 1.5rem; } .toast.success i { color: var(--success); } .toast.error i { color: var(--danger); }
+        @keyframes slideIn { to { transform: translateX(0); } } @keyframes slideOut { to { transform: translateX(120%); opacity: 0; margin-top: -60px;} }
+
+        @media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+</head>
+<body>
+
+    <div id="toast-container"></div>
+
+    <!-- NAVIGATION COMPLÈTE & VERROUILLÉE -->
+    <nav class="sidebar">
+        <div class="brand"><h2><i class="fas fa-store"></i> ROGER PRO</h2></div>
+        <ul class="nav-links">
+            <li onclick="window.location.href='index.html'"><i class="fas fa-cash-register"></i> Point de Vente</li>
+            <li onclick="window.location.href='stocks.html'"><i class="fas fa-boxes"></i> Stocks</li>
+            <li onclick="window.location.href='clients.html'"><i class="fas fa-users"></i> Clients</li>
+            <li class="active" onclick="window.location.href='rapports.html'"><i class="fas fa-chart-bar"></i> Rapports</li>
+            <li onclick="window.location.href='fournisseurs.html'"><i class="fas fa-truck"></i> Fournisseurs</li>
+            <li onclick="window.location.href='depenses.html'"><i class="fas fa-wallet"></i> Dépenses</li>
+            <li onclick="window.location.href='employes.html'"><i class="fas fa-user-shield"></i> Employés</li>
+            <li onclick="window.location.href='paie.html'"><i class="fas fa-file-invoice-dollar"></i> Paie & Salaires</li>
+            <li onclick="window.location.href='commandes.html'"><i class="fas fa-clipboard-list"></i> Commandes</li>
+            <li onclick="window.location.href='parametres.html'"><i class="fas fa-cog"></i> Paramètres</li>
+        </ul>
+        <div class="user-info">
+            <!-- Remplacement de l'icône par l'image de profil -->
+            <img src="https://i.imgur.com/zbAQtQX.jpeg" alt="Adama D. Gnoumou" class="admin-avatar">
+            <div>
+                <span style="display:block; font-size:0.75rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px;">Administrateur</span>
+                <span style="font-weight:700; color:white; font-size:1rem;">Adama D. Gnoumou</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div id="global-loader">
+            <div class="spinner"></div>
+            <div class="loader-brand">DATIEN & FILS ANALYTICS</div>
+            <span class="loader-text">Génération des rapports décisionnels...</span>
+        </div>
+
+        <header class="top-header">
+            <div class="datetime" id="current-datetime"><i class="far fa-clock"></i> <span>Chargement...</span></div>
+            <div class="top-actions">
+                <button class="btn-icon" title="Plein écran" onclick="window.toggleFullScreen()"><i class="fas fa-expand"></i></button>
+            </div>
+        </header>
+
+        <div class="reports-container">
+            <div class="page-header">
+                <h1 class="page-title">Tableau de Bord Commercial</h1>
+                <button class="btn-export" onclick="window.exportToCSV()"><i class="fas fa-file-csv"></i> Exporter le Registre (CSV)</button>
+            </div>
+
+            <!-- FILTRES INDUSTRIELS -->
+            <div class="toolbar">
+                <div class="quick-filters" id="quick-filters">
+                    <button class="filter-btn active" onclick="window.applyQuickFilter('all', this)">Toutes dates</button>
+                    <button class="filter-btn" onclick="window.applyQuickFilter('today', this)">Aujourd'hui</button>
+                    <button class="filter-btn" onclick="window.applyQuickFilter('week', this)">Cette Semaine</button>
+                    <button class="filter-btn" onclick="window.applyQuickFilter('month', this)">Ce Mois-ci</button>
+                    <button class="filter-btn" onclick="window.applyQuickFilter('year', this)">Cette Année</button>
+                </div>
+
+                <div class="date-filter">
+                    <label>Période perso :</label>
+                    <input type="date" id="date-start" class="date-input">
+                    <span style="color:var(--text-muted);font-weight:bold;">-</span>
+                    <input type="date" id="date-end" class="date-input">
+                    <button class="btn-custom-filter" onclick="window.filterByCustomDate()"><i class="fas fa-filter"></i> Filtrer</button>
+                </div>
+            </div>
+
+            <!-- KPIs STRATÉGIQUES (Direction Générale) -->
+            <div class="stats-grid">
+                <div class="stat-card blue">
+                    <div class="stat-header">
+                        <div class="stat-info"><p>Volume de Ventes (Tickets)</p><h3 id="kpi-count">0</h3></div>
+                        <div class="stat-icon"><i class="fas fa-receipt"></i></div>
+                    </div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-header">
+                        <div class="stat-info"><p>Chiffre d'Affaires Brut</p><h3 id="kpi-revenue">0 F</h3></div>
+                        <div class="stat-icon"><i class="fas fa-wallet"></i></div>
+                    </div>
+                </div>
+                <div class="stat-card purple">
+                    <div class="stat-header">
+                        <div class="stat-info"><p>Panier Moyen (Client)</p><h3 id="kpi-average">0 F</h3></div>
+                        <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
+                    </div>
+                </div>
+                <div class="stat-card orange">
+                    <div class="stat-header">
+                        <div class="stat-info"><p>Bénéfice Net Estimé</p><h3 id="kpi-profit">0 F</h3></div>
+                        <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HISTORIQUE DES TRANSACTIONS -->
+            <div class="table-container" id="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date & Heure</th>
+                            <th>Client / Profil</th>
+                            <th>Volume (Articles)</th>
+                            <th>Montant Encaissé</th>
+                            <th>Méthode</th>
+                            <th style="width:100px; text-align:center;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactions-table-body">
+                        <!-- Injection dynamique via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL DÉTAIL TICKET (Style Imprimante Thermique) -->
+    <div id="receipt-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="receipt-wrapper" id="receipt-details">
+                <!-- Détails injectés ici -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-close-modal" onclick="window.closeReceiptModal()"><i class="fas fa-check"></i> Fermer l'aperçu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT FIREBASE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // CONFIGURATION ATLAS & DUC
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOExj8-x4KjGIQi2ewzU7LQP302l9pZrU",
+            authDomain: "atlasgroupebusiness.firebaseapp.com",
+            databaseURL: "https://atlasgroupebusiness-default-rtdb.firebaseio.com",
+            projectId: "atlasgroupebusiness",
+            storageBucket: "atlasgroupebusiness.firebasestorage.app",
+            messagingSenderId: "876963848028",
+            appId: "1:876963848028:web:89a37065ded7b60c1c6b99"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app, "roger-db");
+
+        let allTransactions = [];
+        let currentlyDisplayedTransactions = [];
+
+        // UTILITAIRES
+        const formatMoney = (amount) => new Intl.NumberFormat('fr-FR').format(Math.round(amount || 0)) + ' F';
+        const formatDate = (timestamp) => {
+            if (!timestamp) return "Date Inconnue";
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            return date.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        };
+
+        window.showToast = (msg, type = 'success') => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icon = type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle';
+            toast.innerHTML = `<i class="fas ${icon}"></i> <span>${msg}</span>`;
+            container.appendChild(toast);
+            if(navigator.vibrate) navigator.vibrate(50);
+            setTimeout(() => { if(toast.parentElement) toast.remove(); }, 3500);
+        };
+
+        // HORLOGE
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('current-datetime').innerHTML = `<i class="far fa-clock"></i> <span>${now.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>`;
+        }, 1000);
+
+        // CHARGEMENT INITIAL (Depuis le Cloud)
+        window.loadTransactions = async () => {
+            document.getElementById('global-loader').classList.remove('hidden');
+            try {
+                const q = query(collection(db, "transactions"), orderBy("date", "desc"));
+                const snapshot = await getDocs(q);
+                allTransactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // Par défaut, afficher tout
+                window.applyQuickFilter('all', document.querySelector('.filter-btn.active'));
+                
+                setTimeout(() => document.getElementById('global-loader').classList.add('hidden'), 500);
+            } catch (error) {
+                console.error(error);
+                window.showToast("Échec de connexion au serveur analytique Atlas", "error");
+            }
+        };
+
+        // MOTEUR DE FILTRAGE TEMPOREL
+        window.applyQuickFilter = (period, btnElement) => {
+            if(btnElement) {
+                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                btnElement.classList.add('active');
+            }
+            
+            document.getElementById('date-start').value = '';
+            document.getElementById('date-end').value = '';
+
+            const now = new Date();
+            let start, end;
+
+            switch(period) {
+                case 'today':
+                    start = new Date(now.setHours(0,0,0,0));
+                    end = new Date(now.setHours(23,59,59,999));
+                    break;
+                case 'week':
+                    const firstDayOfWeek = now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1);
+                    start = new Date(now.setDate(firstDayOfWeek));
+                    start.setHours(0,0,0,0);
+                    end = new Date(start);
+                    end.setDate(end.getDate() + 6);
+                    end.setHours(23,59,59,999);
+                    break;
+                case 'month':
+                    start = new Date(now.getFullYear(), now.getMonth(), 1);
+                    end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23,59,59,999);
+                    break;
+                case 'year':
+                    start = new Date(now.getFullYear(), 0, 1);
+                    end = new Date(now.getFullYear(), 11, 31, 23,59,59,999);
+                    break;
+                case 'all':
+                default:
+                    start = new Date(2000, 0, 1);
+                    end = new Date(2100, 0, 1);
+                    break;
+            }
+
+            executeFilter(start, end);
+        };
+
+        window.filterByCustomDate = () => {
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            
+            const startStr = document.getElementById('date-start').value;
+            const endStr = document.getElementById('date-end').value;
+
+            if (!startStr || !endStr) return window.showToast("Veuillez sélectionner une période complète.", "error");
+
+            const start = new Date(startStr); start.setHours(0, 0, 0, 0);
+            const end = new Date(endStr); end.setHours(23, 59, 59, 999);
+
+            executeFilter(start, end);
+        };
+
+        function executeFilter(start, end) {
+            currentlyDisplayedTransactions = allTransactions.filter(t => {
+                if (!t.date) return false;
+                const tDate = t.date.toDate ? t.date.toDate() : new Date(t.date);
+                return tDate >= start && tDate <= end;
+            });
+            renderDashboard(currentlyDisplayedTransactions);
+        }
+
+        // AFFICHAGE TABLEAU & KPIs STRATÉGIQUES
+        function renderDashboard(transactions) {
+            const tableWrapper = document.getElementById('table-wrapper');
+            
+            // 1. Calculs Analytiques (Chiffre d'Affaires & Bénéfice)
+            let totalRevenue = 0;
+            let totalProfit = 0;
+            
+            transactions.forEach(t => {
+                const totalEncaisse = t.totalPaye || 0;
+                totalRevenue += totalEncaisse;
+                
+                // Calcul du coût d'achat pour isoler le bénéfice
+                let coutAchatTransaction = 0;
+                if(t.articles && t.articles.length > 0) {
+                    t.articles.forEach(item => {
+                        const prixAchat = item.prixAchat || 0; // Défaut à 0 si non défini dans le stock
+                        coutAchatTransaction += (prixAchat * item.qte);
+                    });
+                }
+                
+                const beneficeTransaction = totalEncaisse - coutAchatTransaction;
+                totalProfit += beneficeTransaction;
+                
+                // Injection dynamique du profit dans l'objet pour l'affichage ticket
+                t.calculatedProfit = beneficeTransaction;
+            });
+
+            const txCount = transactions.length;
+            const averageCart = txCount > 0 ? (totalRevenue / txCount) : 0;
+
+            document.getElementById('kpi-count').innerText = txCount;
+            document.getElementById('kpi-revenue').innerText = formatMoney(totalRevenue);
+            document.getElementById('kpi-average').innerText = formatMoney(averageCart);
+            document.getElementById('kpi-profit').innerText = formatMoney(totalProfit);
+
+            // 2. Gestion UI (État Vide)
+            if(transactions.length === 0) {
+                tableWrapper.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-chart-bar" style="opacity: 0.5;"></i>
+                        <h3>Aucun historique commercial</h3>
+                        <p>Il n'y a eu aucune vente ou transaction financière validée pour la période sélectionnée.</p>
+                        <a href="index.html" class="btn-go-pos" style="margin-top:10px;"><i class="fas fa-cash-register"></i> Ouvrir la Caisse (POS)</a>
+                    </div>
+                `;
+                return;
+            }
+
+            // 3. Construction Tableau
+            if (!document.querySelector('table')) {
+                tableWrapper.innerHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date & Heure</th>
+                                <th>Client / Profil</th>
+                                <th>Volume (Articles)</th>
+                                <th>Montant Encaissé</th>
+                                <th>Méthode</th>
+                                <th style="width:100px; text-align:center;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-table-body"></tbody>
+                    </table>
+                `;
+            }
+
+            const tbody = document.getElementById('transactions-table-body');
+            tbody.innerHTML = '';
+
+            transactions.forEach(t => {
+                let badgeClass = 'pay-especes';
+                let iconPay = 'fa-money-bill-wave';
+                if (t.methodePaiement === 'Mobile Money') { badgeClass = 'pay-mobile'; iconPay = 'fa-mobile-alt'; }
+                if (t.methodePaiement === 'Crédit') { badgeClass = 'pay-credit'; iconPay = 'fa-address-book'; }
+                
+                const clientName = t.client && t.client.nom ? t.client.nom : 'Client de passage';
+                const itemsCount = t.articles ? t.articles.reduce((acc, item) => acc + item.qte, 0) : 0;
+                
+                // Échappement sécurisé pour le passage JSON
+                const tJson = encodeURIComponent(JSON.stringify(t));
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="date-cell">${formatDate(t.date)}</td>
+                        <td class="client-cell">${clientName}</td>
+                        <td style="font-weight:500;">${itemsCount} produit(s)</td>
+                        <td class="amount-cell">${formatMoney(t.totalPaye)}</td>
+                        <td><span class="badge-pay ${badgeClass}"><i class="fas ${iconPay}"></i> ${t.methodePaiement || 'Comptant'}</span></td>
+                        <td style="text-align:center;">
+                            <button class="btn-view" onclick="window.viewReceipt('${tJson}')" title="Inspecter la transaction"><i class="fas fa-eye"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // EXPORT CSV POUR LA COMPTABILITÉ (Intègre le Bénéfice)
+        window.exportToCSV = () => {
+            if(currentlyDisplayedTransactions.length === 0) return window.showToast("Le registre est vide pour cette période.", "error");
+
+            let csvContent = "Date,Client,Volume Produits,Sous-Total(FCFA),Remise(FCFA),Total Encaisse(FCFA),Benefice Net Estime(FCFA),Methode,Caissier\n";
+            
+            currentlyDisplayedTransactions.forEach(t => {
+                const dateStr = formatDate(t.date).replace(',', '');
+                const client = t.client && t.client.nom ? t.client.nom.replace(/,/g, ' ') : 'Client de passage';
+                const itemsCount = t.articles ? t.articles.reduce((acc, item) => acc + item.qte, 0) : 0;
+                const sousTotal = t.sousTotal || 0;
+                const remise = t.remiseMontant || 0;
+                const total = t.totalPaye || 0;
+                const benefice = t.calculatedProfit || 0;
+                const methode = t.methodePaiement || 'Comptant';
+                const caissier = t.caissier || 'System';
+
+                csvContent += `"${dateStr}","${client}",${itemsCount},${sousTotal},${remise},${total},${benefice},"${methode}","${caissier}"\n`;
+            });
+
+            const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+            const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Livre_Ventes_${new Date().toLocaleDateString('fr-FR').replace(/\//g, '-')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            window.showToast("Registre comptable exporté avec succès !");
+        };
+
+        // GESTION MODAL DÉTAIL TICKET (Avec visualisation de la marge)
+        window.viewReceipt = (encodedJson) => {
+            const t = JSON.parse(decodeURIComponent(encodedJson));
+            const receiptDiv = document.getElementById('receipt-details');
+            
+            let articlesHtml = '';
+            if(t.articles && t.articles.length > 0) {
+                t.articles.forEach(item => {
+                    articlesHtml += `<li><span>${item.qte}x ${item.nom}</span> <span>${formatMoney(item.prixUnitaire * item.qte)}</span></li>`;
+                });
+            }
+
+            // Affichage analytique du bénéfice (Réservé au gérant)
+            const profitValue = t.calculatedProfit || 0;
+            const profitStr = profitValue >= 0 ? `+${formatMoney(profitValue)}` : formatMoney(profitValue);
+            const profitColor = profitValue >= 0 ? 'var(--success)' : 'var(--danger)';
+
+            receiptDiv.innerHTML = `
+                <div class="receipt-header-info">
+                    <h2>DATIEN & FILS (POS)</h2>
+                    Le ${formatDate(t.date)}<br>
+                    Client : <strong>${t.client && t.client.nom ? t.client.nom : 'Client de passage'}</strong>
+                </div>
+                
+                <ul class="receipt-list">
+                    ${articlesHtml}
+                </ul>
+                
+                <div class="receipt-totals">
+                    <div class="line"><span>Sous-total HT:</span> <span>${formatMoney(t.sousTotal)}</span></div>
+                    ${t.remiseMontant > 0 ? `<div class="line"><span>Remise (${t.remisePourcentage}\%):</span> <span>-${formatMoney(t.remiseMontant)}</span></div>` : ''}
+                    
+                    <div class="line" style="color:var(--secondary); font-size:1.4rem; margin-top:15px; padding-top:10px; border-top:2px solid #cbd5e1;">
+                        <span>NET PAYÉ:</span> 
+                        <span>${formatMoney(t.totalPaye)}</span>
+                    </div>
+                    
+                    <div style="margin-top:25px; padding:10px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:6px;">
+                        <div class="line" style="font-weight:600; font-size:0.9rem; color:var(--text-muted); margin-bottom:5px;">
+                            <span>Moyen de paiement:</span> 
+                            <span>${t.methodePaiement || 'Espèces'}</span>
+                        </div>
+                        <div class="line" style="font-weight:800; font-size:0.9rem; color:var(--text-main);">
+                            <span><i class="fas fa-chart-line" style="color:${profitColor}"></i> Marge générée:</span> 
+                            <span style="color:${profitColor};">${profitStr}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('receipt-modal').classList.remove('hidden');
+        };
+
+        window.closeReceiptModal = () => document.getElementById('receipt-modal').classList.add('hidden');
+        
+        window.toggleFullScreen = () => {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+            else if (document.exitFullscreen) document.exitFullscreen();
+        };
+
+        // Démarrage de l'analyse
+        window.loadTransactions();
+
+    </script>
+</body>
+</html>

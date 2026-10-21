@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roger Service Pro - Caisse Premium</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Librairie Scanner Code-Barres -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    
+    <style>
+        /* --- DESIGN SYSTEM PREMIUM --- */
+        :root {
+            --primary: #4f46e5; 
+            --primary-hover: #4338ca;
+            --secondary: #0f172a; 
+            --secondary-light: #1e293b;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --success-hover: #059669;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --warning: #f59e0b;
+            --border: #e2e8f0;
+            
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --radius-md: 10px;
+            --radius-lg: 16px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        
+        /* GESTION DE L'ÉCRAN (Empêche le menu de disparaître) */
+        body { 
+            display: flex; 
+            height: 100vh; 
+            width: 100vw;
+            background-color: var(--background); 
+            color: var(--text-main); 
+            overflow: hidden; 
+            -webkit-font-smoothing: antialiased; 
+        }
+        
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 20px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        button { cursor: pointer; border: none; outline: none; font-weight: 600; transition: all 0.2s ease; }
+        .btn-icon { background: none; font-size: 1.3rem; color: var(--text-muted); padding: 8px; border-radius: 50%; }
+        .btn-icon:hover { color: var(--primary); background: #eff6ff; }
+        
+        /* --- SIDEBAR PREMIUM (VERROUILLÉE ET TOUJOURS VISIBLE) --- */
+        .sidebar { 
+            width: 250px; 
+            min-width: 250px; /* Force la largeur minimum */
+            flex-shrink: 0;   /* Empêche Flexbox d'écraser le menu */
+            background: linear-gradient(180deg, var(--secondary) 0%, var(--secondary-light) 100%); 
+            color: white; 
+            display: flex !important; /* Force l'affichage */
+            flex-direction: column; 
+            padding: 2rem 1.2rem; 
+            z-index: 10; 
+            box-shadow: 4px 0 15px rgba(0,0,0,0.05); 
+            overflow-y: auto; 
+        }
+
+        .brand h2 { font-size: 1.3rem; font-weight: 800; display: flex; align-items: center; gap: 12px; margin-bottom: 3rem; letter-spacing: -0.5px; }
+        .brand h2 i { color: #818cf8; font-size: 1.5rem; }
+        .nav-links { list-style: none; flex: 1; display: flex; flex-direction: column; gap: 5px; }
+        .nav-links li { padding: 0.9rem 1.2rem; border-radius: var(--radius-md); display: flex; align-items: center; gap: 15px; color: #94a3b8; cursor: pointer; transition: 0.3s; font-weight: 500; font-size: 0.9rem; }
+        .nav-links li i { font-size: 1.1rem; width: 20px; text-align: center; }
+        .nav-links li:hover { background-color: rgba(255,255,255,0.05); color: white; }
+        .nav-links li.active { background-color: var(--primary); color: white; box-shadow: var(--shadow-md); }
+        .user-info { display: flex; align-items: center; gap: 12px; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.9rem; color: #e2e8f0; font-weight: 500; margin-top: 1rem; }
+        .user-info i { font-size: 1.8rem; color: #818cf8; }
+        
+        /* Style de la photo de profil administrateur */
+        .admin-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #818cf8;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            background-color: #fff;
+        }
+
+        /* --- MAIN CONTENT & HEADER --- */
+        .main-content { 
+            flex: 1; 
+            min-width: 0; /* Empêche le contenu de déborder sur la sidebar */
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            position: relative; 
+            overflow-x: auto;
+        }
+        
+        .top-header { background: var(--surface); padding: 1.2rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); box-shadow: var(--shadow-sm); z-index: 10; }
+        .datetime { font-weight: 600; color: var(--text-muted); font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+        
+        /* LOADER PREMIUM */
+        #global-loader { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.95); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; backdrop-filter: blur(5px); }
+        .loader-brand { font-size: 1.5rem; font-weight: 800; color: var(--secondary); letter-spacing: -0.5px; margin-bottom: 10px; }
+        .spinner { border: 4px solid var(--border); border-top: 4px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+        .loader-text { font-weight: 600; color: var(--text-muted); font-size: 1rem; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hidden { display: none !important; opacity: 0; pointer-events: none; }
+
+        /* --- POS LAYOUT --- */
+        .pos-layout { display: flex; flex: 1; padding: 1.5rem; gap: 1.5rem; overflow: hidden; background: var(--background); min-width: 800px; /* Sécurité pour terminaux POS */ }
+
+        /* SECTION PRODUITS */
+        .products-section { flex: 2; display: flex; flex-direction: column; gap: 1.2rem; overflow: hidden; }
+        
+        .search-bar { display: flex; gap: 10px; }
+        .search-bar .input-group { flex: 1; position: relative; display: flex; align-items: center; box-shadow: var(--shadow-sm); border-radius: var(--radius-lg); }
+        .search-bar .input-group i { position: absolute; left: 20px; color: var(--text-muted); font-size: 1.2rem; }
+        #search-input { width: 100%; padding: 1.2rem 1.2rem 1.2rem 3.5rem; font-size: 1.05rem; border: 1px solid var(--border); border-radius: var(--radius-lg); outline: none; transition: all 0.3s ease; font-weight: 500; }
+        #search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15); }
+        
+        .btn-scan-cam { background: var(--secondary); color: white; border-radius: var(--radius-lg); padding: 0 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 10px; box-shadow: var(--shadow-sm); transition: 0.2s; white-space: nowrap; }
+        .btn-scan-cam:hover { background: var(--secondary-light); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+        .categories-wrapper { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; scroll-behavior: smooth; }
+        .category-btn { padding: 0.7rem 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 30px; white-space: nowrap; color: var(--text-muted); font-size: 0.95rem; box-shadow: var(--shadow-sm); }
+        .category-btn:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-1px); }
+        .category-btn.active { background: var(--secondary); color: white; border-color: var(--secondary); box-shadow: var(--shadow-md); }
+
+        /* GRILLE DE PRODUITS PREMIUM */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; overflow-y: auto; padding-right: 5px; flex: 1; align-content: start; }
+        .product-card { background: var(--surface); padding: 1.2rem; border-radius: var(--radius-lg); text-align: center; cursor: pointer; border: 1px solid var(--border); transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 150px; position: relative; box-shadow: var(--shadow-sm); }
+        .product-card:hover { border-color: var(--primary); transform: translateY(-4px); box-shadow: var(--shadow-md); }
+        .product-card:active { transform: translateY(0); }
+        
+        .product-card-img { width: 60px; height: 60px; object-fit: cover; border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+        .product-card i.fa-box-open { font-size: 2.2rem; color: #cbd5e1; margin-bottom: 12px; }
+        .product-card i.icon-fallback { font-size: 2.2rem; color: #94a3b8; margin-bottom: 12px; transition: color 0.2s; }
+        .product-card:hover i.icon-fallback { color: var(--primary); }
+        
+        .product-card h4 { font-size: 0.95rem; color: var(--text-main); margin-bottom: 8px; line-height: 1.3; font-weight: 600; }
+        .product-card p { font-weight: 800; color: var(--primary); font-size: 1.15rem; }
+        .stock-badge { position: absolute; top: 10px; right: 10px; font-size: 0.7rem; padding: 3px 8px; border-radius: 20px; font-weight: 700; background: var(--background); border: 1px solid var(--border); z-index: 2; }
+        
+        .empty-state { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4rem 2rem; color: var(--text-muted); text-align: center; height: 100%; }
+        .empty-state i { font-size: 4rem; color: #cbd5e1; margin-bottom: 15px; }
+        .empty-state h3 { font-size: 1.5rem; color: var(--secondary); font-weight: 700; margin-bottom: 10px; }
+        .empty-state p { font-size: 1rem; max-width: 400px; line-height: 1.5; margin-bottom: 20px; }
+        .empty-state .btn-go-stocks { padding: 0.8rem 2rem; background: var(--primary); color: white; border-radius: var(--radius-md); font-weight: 700; box-shadow: var(--shadow-md); transition: 0.2s; text-decoration: none; }
+        .empty-state .btn-go-stocks:hover { background: var(--primary-hover); transform: translateY(-2px); }
+
+        /* SECTION PANIER (TICKET) */
+        .cart-section { flex: 1; background: var(--surface); border-radius: var(--radius-lg); display: flex; flex-direction: column; box-shadow: var(--shadow-lg); border: 1px solid var(--border); min-width: 380px; max-width: 450px; z-index: 5; overflow: hidden; }
+        
+        .client-selector { padding: 1.2rem; border-bottom: 1px solid var(--border); display: flex; gap: 12px; align-items: center; background: #f8fafc; }
+        .client-selector i { font-size: 1.8rem; color: var(--primary); }
+        #client-select { flex: 1; padding: 0.8rem; border: 1px solid var(--border); border-radius: var(--radius-md); outline: none; font-weight: 600; font-size: 0.95rem; color: var(--text-main); cursor: pointer; transition: 0.2s; }
+        #client-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+        
+        .cart-table-header { display: grid; grid-template-columns: 2fr 110px 1fr 30px; gap: 10px; padding: 1rem 1.2rem; border-bottom: 2px solid var(--background); font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        #cart-items { flex: 1; overflow-y: auto; list-style: none; padding: 0.5rem 0; }
+        .cart-item { display: grid; grid-template-columns: 2fr 110px 1fr 30px; gap: 10px; padding: 1rem 1.2rem; border-bottom: 1px solid #f1f5f9; align-items: center; transition: background 0.2s; }
+        .cart-item:hover { background: #f8fafc; }
+        .item-name { font-weight: 600; color: var(--text-main); font-size: 0.95rem; }
+        
+        .qty-controls { display: flex; align-items: center; gap: 10px; background: var(--background); padding: 4px; border-radius: 20px; justify-content: space-between; border: 1px solid var(--border); }
+        .qty-btn { width: 28px; height: 28px; border-radius: 50%; background: white; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-main); font-weight: bold; box-shadow: var(--shadow-sm); }
+        .qty-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+        .qty-val { font-weight: 700; font-size: 0.9rem; width: 20px; text-align: center; }
+        
+        .item-price { font-weight: 800; text-align: right; color: var(--text-main); font-size: 1rem; }
+        .btn-remove { color: var(--danger); font-size: 1.2rem; opacity: 0.6; transition: 0.2s; }
+        .btn-remove:hover { opacity: 1; transform: scale(1.1); }
+
+        .cart-summary { padding: 1.2rem; background: var(--surface); border-top: 1px solid var(--border); box-shadow: 0 -4px 6px -1px rgba(0,0,0,0.02); }
+        .summary-line { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; font-size: 1rem; color: var(--text-muted); font-weight: 500; }
+        #discount-input { width: 80px; padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px; text-align: right; font-weight: 700; outline: none; font-size: 1rem; color: var(--primary); background: #eff6ff; }
+        #discount-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+        
+        .total-line { margin-top: 1rem; padding-top: 1.2rem; border-top: 2px dashed #cbd5e1; align-items: flex-end; }
+        .total-line span { font-weight: 700; color: var(--text-main); font-size: 1.2rem; }
+        #total-price { font-size: 2.5rem; color: var(--success); font-weight: 800; letter-spacing: -1px; line-height: 1; }
+
+        .cart-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 1.2rem; margin-bottom: 1rem; }
+        .btn-action { padding: 1rem; border-radius: var(--radius-md); font-weight: 700; font-size: 0.95rem; letter-spacing: 0.5px; text-transform: uppercase; }
+        .btn-danger { background: #fef2f2; color: var(--danger); border: 1px solid #fca5a5; }
+        .btn-danger:hover { background: var(--danger); color: white; }
+        .btn-warning { background: #fffbeb; color: #d97706; border: 1px solid #fcd34d; }
+        .btn-warning:hover { background: var(--warning); color: white; }
+
+        #pay-btn { margin: 0 1.2rem 1.2rem 1.2rem; padding: 1.2rem; font-size: 1.3rem; background: var(--success); color: white; border-radius: var(--radius-lg); font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 12px; box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3); text-transform: uppercase; letter-spacing: 1px; }
+        #pay-btn:hover { background: var(--success-hover); transform: translateY(-2px); box-shadow: 0 15px 20px -3px rgba(16, 185, 129, 0.4); }
+        #pay-btn:active { transform: translateY(0); }
+
+        /* --- MODAL PAIEMENT PREMIUM --- */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 1; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); backdrop-filter: blur(8px); }
+        .modal-content { background: var(--surface); width: 500px; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; transform: scale(1); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); }
+        .modal.hidden { opacity: 0; pointer-events: none; }
+        .modal.hidden .modal-content { transform: scale(0.95) translateY(20px); }
+        
+        .modal-header { padding: 1.5rem 2rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--background); }
+        .modal-header h3 { font-size: 1.4rem; font-weight: 800; color: var(--secondary); letter-spacing: -0.5px; }
+        .modal-header .btn-icon { background: white; box-shadow: var(--shadow-sm); border: 1px solid var(--border); color: var(--text-main); }
+        
+        .modal-body { padding: 2rem; }
+        .amount-due { text-align: center; margin-bottom: 2rem; }
+        .amount-due span { color: var(--text-muted); font-size: 1.1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px; }
+        #modal-total { display: block; font-size: 3rem; color: var(--primary); font-weight: 900; letter-spacing: -1px; line-height: 1; }
+        
+        .payment-methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 2rem; }
+        .pay-method { padding: 1.2rem 0; border: 2px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); color: var(--text-muted); font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s ease; cursor: pointer; }
+        .pay-method i { font-size: 1.8rem; }
+        .pay-method:hover { border-color: #cbd5e1; background: #f8fafc; }
+        .pay-method.active { border-color: var(--primary); background: #eff6ff; color: var(--primary); box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15); transform: translateY(-2px); }
+        
+        .cash-calculator { background: var(--background); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border); }
+        .cash-calculator label { font-weight: 700; color: var(--secondary); display: block; margin-bottom: 12px; font-size: 0.95rem; }
+        
+        /* Boutons Rapides (Quick Cash) */
+        .quick-cash { display: flex; gap: 10px; margin-bottom: 12px; }
+        .quick-cash button { flex: 1; padding: 0.8rem; background: white; border: 1px solid var(--border); border-radius: var(--radius-md); font-weight: 700; color: var(--primary); box-shadow: var(--shadow-sm); }
+        .quick-cash button:hover { border-color: var(--primary); background: #eff6ff; }
+
+        #cash-received { width: 100%; padding: 1.2rem; font-size: 1.8rem; border: 2px solid var(--border); border-radius: var(--radius-md); margin-bottom: 1.5rem; text-align: right; outline: none; font-weight: 800; color: var(--text-main); background: white; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
+        #cash-received:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
+        
+        .change-due { display: flex; justify-content: space-between; font-weight: 700; border-top: 2px dashed #cbd5e1; padding-top: 1.5rem; align-items: center; }
+        .change-due span { color: var(--text-muted); font-size: 1.1rem; text-transform: uppercase; }
+        #change-amount { color: var(--success); font-size: 2.2rem; font-weight: 900; margin: 0; letter-spacing: -1px; }
+        
+        .modal-footer { padding: 1.5rem 2rem; border-top: 1px solid var(--border); background: var(--background); }
+        .btn-success-large { width: 100%; padding: 1.2rem; background: var(--primary); color: white; font-size: 1.2rem; font-weight: 800; border-radius: var(--radius-lg); box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3); transition: all 0.2s ease; display: flex; justify-content: center; gap: 12px; letter-spacing: 0.5px; }
+        .btn-success-large:hover:not(:disabled) { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 15px 20px -3px rgba(79, 70, 229, 0.4); }
+        .btn-success-large:disabled { background: #cbd5e1; color: #94a3b8; cursor: not-allowed; box-shadow: none; transform: none; }
+
+        /* --- MODAL CAMÉRA SCANNER CAISSE --- */
+        #scanner-modal .modal-content { width: 100%; max-width: 500px; background: black; border: none; }
+        #scanner-modal .modal-header { background: #1e293b; color: white; border-bottom: none; }
+        #scanner-modal .modal-header h3 { color: white; }
+        #scanner-modal .btn-icon { background: rgba(255,255,255,0.1); color: white; border: none; }
+        #reader { width: 100%; min-height: 300px; background: black; }
+
+        /* --- TOAST NOTIFICATIONS PREMIUM --- */
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; }
+        .toast { padding: 1.2rem 1.5rem; border-radius: var(--radius-md); background: white; color: var(--secondary); font-weight: 600; font-size: 0.95rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 15px; transform: translateX(120%); animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards, slideOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards 3.5s; border-left: 6px solid; }
+        .toast.success { border-color: var(--success); } .toast.error { border-color: var(--danger); } .toast.warning { border-color: var(--warning); }
+        .toast i { font-size: 1.5rem; } .toast.success i { color: var(--success); } .toast.error i { color: var(--danger); } .toast.warning i { color: var(--warning); }
+        @keyframes slideIn { to { transform: translateX(0); } } @keyframes slideOut { to { transform: translateX(120%); opacity: 0; margin-top: -60px; } }
+
+        /* --- STYLES D'IMPRESSION (TICKET THERMIQUE 80MM PRO) --- */
+        #printable-receipt { display: none; }
+        @media print {
+            @page { margin: 0; size: 80mm auto; }
+            body { background: white; margin: 0; padding: 0; }
+            body > * { display: none !important; }
+            #printable-receipt { display: block !important; position: absolute; left: 0; top: 0; width: 80mm; padding: 5mm; margin: 0; font-family: 'Courier New', Courier, monospace; color: black; font-size: 12px; line-height: 1.2; }
+            .receipt-header { text-align: center; margin-bottom: 5mm; }
+            .receipt-header h2 { font-size: 18px; margin: 0 0 3px 0; font-weight: bold; text-transform: uppercase; }
+            .receipt-header p { margin: 2px 0; font-size: 11px; }
+            .divider { border-bottom: 1px dashed black; margin: 5mm 0; }
+            .receipt-table { width: 100%; margin-bottom: 5mm; border-collapse: collapse; }
+            .receipt-table th { text-align: left; border-bottom: 1px solid black; padding-bottom: 3px; font-weight: bold; font-size: 11px; }
+            .receipt-table td { padding: 4px 0; vertical-align: top; font-size: 12px; }
+            .receipt-table .col-price { text-align: right; }
+            .receipt-table .col-qty { text-align: center; width: 15%; }
+            .receipt-totals { margin-bottom: 5mm; }
+            .receipt-totals .line { display: flex; justify-content: space-between; margin-bottom: 3px; }
+            .receipt-totals .bold { font-weight: bold; font-size: 16px; margin-top: 5px; padding-top: 5px; border-top: 2px solid black; }
+            .receipt-footer { text-align: center; font-size: 10px; margin-top: 5mm; }
+            .receipt-footer p { margin: 3px 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ZONE D'IMPRESSION CACHÉE -->
+    <div id="printable-receipt"></div>
+
+    <!-- CONTENEUR TOASTS -->
+    <div id="toast-container"></div>
+
+    <nav class="sidebar">
+        <div class="brand">
+            <h2><i class="fas fa-store"></i> ROGER PRO</h2>
+        </div>
+        
+        <ul class="nav-links">
+            <li class="active" onclick="window.location.href='index.html'"><i class="fas fa-cash-register"></i> Point de Vente</li>
+            <li onclick="window.location.href='stocks.html'"><i class="fas fa-boxes"></i> Stocks</li>
+            <li onclick="window.location.href='clients.html'"><i class="fas fa-users"></i> Clients</li>
+            <li onclick="window.location.href='rapports.html'"><i class="fas fa-chart-bar"></i> Rapports</li>
+            <li onclick="window.location.href='fournisseurs.html'"><i class="fas fa-truck"></i> Fournisseurs</li>
+            <li onclick="window.location.href='depenses.html'"><i class="fas fa-wallet"></i> Dépenses</li>
+            <li onclick="window.location.href='employes.html'"><i class="fas fa-user-shield"></i> Employés</li>
+            <li onclick="window.location.href='paie.html'"><i class="fas fa-file-invoice-dollar"></i> Paie & Salaires</li>
+            <li onclick="window.location.href='commandes.html'"><i class="fas fa-clipboard-list"></i> Commandes</li>
+            <li onclick="window.location.href='parametres.html'"><i class="fas fa-cog"></i> Paramètres</li>
+        </ul>
+
+        <div class="user-info">
+            <!-- Remplacement de l'icône par l'image de profil -->
+            <img src="https://i.imgur.com/zbAQtQX.jpeg" alt="Adama D. Gnoumou" class="admin-avatar">
+            <div>
+                <span style="display:block; font-size:0.75rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px;">Administrateur</span>
+                <span style="font-weight:700; color:white; font-size:1rem;">Adama D. Gnoumou</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div id="global-loader">
+            <div class="spinner"></div>
+            <div class="loader-brand">DATIEN & FILS POS</div>
+            <span class="loader-text">Connexion sécurisée au serveur...</span>
+        </div>
+
+        <header class="top-header">
+            <div class="datetime" id="current-datetime">
+                <i class="far fa-clock"></i> <span>Chargement...</span>
+            </div>
+            <div class="top-actions">
+                <button class="btn-icon" title="Plein écran" onclick="window.toggleFullScreen()"><i class="fas fa-expand"></i></button>
+            </div>
+        </header>
+
+        <div class="pos-layout">
+            <!-- SECTION PRODUITS -->
+            <section class="products-section">
+                <div class="search-bar">
+                    <div class="input-group">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="search-input" placeholder="Taper le nom ou scanner une douchette..." autofocus>
+                    </div>
+                    <button class="btn-scan-cam" onclick="window.startScanner()"><i class="fas fa-camera"></i> Scanner</button>
+                </div>
+
+                <div class="categories-wrapper" id="categories-container">
+                    <button class="category-btn active" onclick="window.filterCategory('Tout', this)">Tout afficher</button>
+                    <!-- Catégories injectées dynamiquement -->
+                </div>
+
+                <div class="grid" id="product-grid">
+                    <!-- Produits ou État Vide injectés dynamiquement -->
+                </div>
+            </section>
+
+            <!-- SECTION PANIER -->
+            <aside class="cart-section">
+                <div class="client-selector">
+                    <i class="fas fa-user-circle"></i>
+                    <select id="client-select">
+                        <option value="standard">Client Comptoir (Défaut)</option>
+                    </select>
+                </div>
+
+                <div class="cart-table-header">
+                    <span>Article</span>
+                    <span style="text-align: center;">Qté</span>
+                    <span style="text-align: right;">Prix</span>
+                    <span></span>
+                </div>
+
+                <ul id="cart-items">
+                    <!-- Le panier se remplit ici -->
+                </ul>
+
+                <div class="cart-summary">
+                    <div class="summary-line">
+                        <span>Sous-total</span>
+                        <span id="sub-total" style="font-weight:700; color:var(--secondary)">0 F</span>
+                    </div>
+                    <div class="summary-line">
+                        <span>Remise commerciale (%)</span>
+                        <input type="number" id="discount-input" value="0" min="0" max="100">
+                    </div>
+                    <div class="summary-line total-line">
+                        <span>NET À PAYER</span>
+                        <h2 id="total-price">0 F</h2>
+                    </div>
+                </div>
+
+                <div class="cart-actions">
+                    <button class="btn-action btn-danger" onclick="window.cancelCart()"><i class="fas fa-trash-alt"></i> Vider</button>
+                    <button class="btn-action btn-warning"><i class="fas fa-pause-circle"></i> Attente</button>
+                </div>
+
+                <button id="pay-btn" onclick="window.openPaymentModal()">
+                    <i class="fas fa-credit-card"></i> ENCAISSER
+                </button>
+            </aside>
+        </div>
+    </main>
+
+    <!-- MODAL DE PAIEMENT PREMIUM -->
+    <div id="payment-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Finaliser l'Encaissement</h3>
+                <button class="btn-icon" onclick="window.closePaymentModal()"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="amount-due">
+                    <span>Montant total réclamé</span>
+                    <span id="modal-total">0 F</span>
+                </div>
+                
+                <div class="payment-methods">
+                    <button class="pay-method active" onclick="window.setPaymentMethod(this, 'Espèces')">
+                        <i class="fas fa-money-bill-wave"></i> Espèces
+                    </button>
+                    <button class="pay-method" onclick="window.setPaymentMethod(this, 'Mobile Money')">
+                        <i class="fas fa-mobile-alt"></i> Mobile
+                    </button>
+                    <button class="pay-method" onclick="window.setPaymentMethod(this, 'Crédit')">
+                        <i class="fas fa-address-book"></i> Crédit
+                    </button>
+                </div>
+
+                <div class="cash-calculator" id="cash-calc-section">
+                    <label>Montant remis par le client (FCFA) :</label>
+                    <div class="quick-cash">
+                        <button type="button" onclick="window.setQuickCash(5000)">5 000 F</button>
+                        <button type="button" onclick="window.setQuickCash(10000)">10 000 F</button>
+                        <button type="button" onclick="window.setExactAmount()">Compte juste</button>
+                    </div>
+
+                    <input type="number" id="cash-received" placeholder="Ex: 15000">
+                    
+                    <div class="change-due">
+                        <span>Monnaie à rendre :</span>
+                        <h3 id="change-amount">0 F</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button id="confirm-pay-btn" class="btn-success-large" onclick="window.processTransaction()">
+                    <i class="fas fa-print"></i> VALIDER ET IMPRIMER LE TICKET
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CAMÉRA SCANNER CAISSE -->
+    <div id="scanner-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Scanner un article</h3>
+                <button class="btn-icon" onclick="window.stopScanner()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding:0; background:black;">
+                <div id="reader"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT FIREBASE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, getDoc, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // CONFIGURATION ATLAS & DUC
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOExj8-x4KjGIQi2ewzU7LQP302l9pZrU",
+            authDomain: "atlasgroupebusiness.firebaseapp.com",
+            databaseURL: "https://atlasgroupebusiness-default-rtdb.firebaseio.com",
+            projectId: "atlasgroupebusiness",
+            storageBucket: "atlasgroupebusiness.firebasestorage.app",
+            messagingSenderId: "876963848028",
+            appId: "1:876963848028:web:89a37065ded7b60c1c6b99"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app, "roger-db");
+
+        // VARIABLES GLOBALES
+        let products = [];
+        let cart = [];
+        let currentCategory = 'Tout';
+        let discount = 0;
+        let grandTotal = 0;
+        let subTotalGlobal = 0;
+        let selectedPaymentMethod = 'Espèces';
+        let storeInfo = { name: "Roger Service Pro", receiptMessage: "Merci de votre visite !" }; 
+        let html5QrCode; // Instance Scanner
+
+        const formatMoney = (amount) => new Intl.NumberFormat('fr-FR').format(amount) + ' F';
+
+        window.showToast = (msg, type = 'success') => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icon = type === 'error' ? 'fa-exclamation-circle' : type === 'warning' ? 'fa-exclamation-triangle' : 'fa-check-circle';
+            toast.innerHTML = `<i class="fas ${icon}"></i> <span>${msg}</span>`;
+            container.appendChild(toast);
+            if (navigator.vibrate) navigator.vibrate(50);
+            setTimeout(() => { if(toast.parentElement) toast.remove(); }, 3500);
+        };
+
+        setInterval(() => {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            document.getElementById('current-datetime').innerHTML = `<i class="far fa-clock"></i> <span>${now.toLocaleDateString('fr-FR', options)}</span>`;
+        }, 1000);
+
+        async function initData() {
+            try {
+                try {
+                    const storeSnap = await getDoc(doc(db, "settings", "store_info"));
+                    if (storeSnap.exists()) storeInfo = storeSnap.data();
+                } catch(e) { console.warn("Infos par défaut."); }
+
+                const catSnapshot = await getDocs(collection(db, "categories"));
+                const catContainer = document.getElementById('categories-container');
+                catContainer.innerHTML = `<button class="category-btn active" onclick="window.filterCategory('Tout', this)">Tout afficher</button>`;
+                if (!catSnapshot.empty) {
+                    catSnapshot.forEach(doc => {
+                        catContainer.innerHTML += `<button class="category-btn" onclick="window.filterCategory('${doc.data().name}', this)">${doc.data().name}</button>`;
+                    });
+                }
+
+                const clientSnapshot = await getDocs(collection(db, "clients"));
+                const clientSelect = document.getElementById('client-select');
+                clientSelect.innerHTML = `<option value="standard">Client Comptoir (Défaut)</option>`;
+                if (!clientSnapshot.empty) {
+                    clientSnapshot.forEach(doc => {
+                        clientSelect.innerHTML += `<option value="${doc.id}">${doc.data().name}</option>`;
+                    });
+                }
+
+                const prodSnapshot = await getDocs(collection(db, "products"));
+                products = prodSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                renderProducts();
+                setTimeout(() => document.getElementById('global-loader').classList.add('hidden'), 500);
+
+            } catch (error) {
+                console.error("Erreur:", error);
+                window.showToast("Erreur de synchronisation.", "error");
+            }
+        }
+
+        function renderProducts(filterText = '') {
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = '';
+            
+            if (products.length === 0) {
+                grid.style.display = 'block';
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-boxes"></i>
+                        <h3>Catalogue Vierge</h3>
+                        <p>Il n'y a actuellement aucun produit enregistré dans la base de données.</p>
+                        <a href="stocks.html" class="btn-go-stocks" style="margin-top: 15px; display: inline-block;">
+                            <i class="fas fa-plus"></i> Configurer le stock
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.style.display = 'grid';
+
+            // RECHERCHE INTELLIGENTE : Recherche par Nom OU par Code-Barres
+            let filtered = products.filter(p => {
+                const searchStr = (p.name + " " + (p.barcode || "")).toLowerCase();
+                const matchSearch = searchStr.includes(filterText.toLowerCase());
+                const matchCat = currentCategory === 'Tout' || p.category === currentCategory;
+                return matchSearch && matchCat;
+            });
+
+            // Si le texte saisi correspond EXACTEMENT à un code-barres de la base, 
+            // on l'ajoute automatiquement au panier (utile pour les douchettes physiques)
+            if (filterText !== '' && filtered.length === 1 && filtered[0].barcode === filterText.trim()) {
+                window.addToCart(filtered[0].id);
+                document.getElementById('search-input').value = ''; // Vide la barre après le scan douchette
+                return renderProducts(''); // Réaffiche tout
+            }
+
+            if (filtered.length === 0) {
+                grid.style.display = 'block';
+                grid.innerHTML = `
+                    <div class="empty-state" style="padding-top: 2rem;">
+                        <i class="fas fa-search" style="font-size:3rem; margin-bottom: 10px;"></i>
+                        <p>Aucun produit ne correspond à cette recherche.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(product => {
+                const stockColor = product.stock <= 5 ? 'var(--danger)' : 'var(--secondary)';
+                const stockText = product.stock > 0 ? `${product.stock} dispo` : 'RUPTURE';
+                const opacityStyle = product.stock <= 0 ? 'opacity: 0.4; filter: grayscale(1); pointer-events: none;' : '';
+                
+                let imageHtml = `<i class="fas ${product.icon || 'fa-box'} icon-fallback"></i>`;
+                if(product.imageUrl) {
+                    imageHtml = `<img src="${product.imageUrl}" alt="${product.name}" class="product-card-img" loading="lazy">`;
+                }
+                
+                grid.innerHTML += `
+                    <div class="product-card" onclick="window.addToCart('${product.id}')" style="${opacityStyle}">
+                        <span class="stock-badge" style="color: ${stockColor}">${stockText}</span>
+                        ${imageHtml}
+                        <h4>${product.name}</h4>
+                        <p>${formatMoney(product.price)}</p>
+                    </div>
+                `;
+            });
+        }
+
+        window.filterCategory = (category, btnElement) => {
+            currentCategory = category;
+            document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+            if(btnElement) btnElement.classList.add('active');
+            document.getElementById('search-input').value = '';
+            renderProducts();
+        };
+
+        document.getElementById('search-input').addEventListener('input', (e) => renderProducts(e.target.value));
+
+        // --- SCANNER CAMÉRA INTÉGRÉ À LA CAISSE ---
+        window.startScanner = () => {
+            document.getElementById('scanner-modal').classList.remove('hidden');
+            html5QrCode = new Html5Qrcode("reader");
+            
+            const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+            
+            html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+                // Dès qu'un code est lu
+                window.stopScanner();
+                
+                // On cherche le produit correspondant
+                const foundProduct = products.find(p => p.barcode === decodedText.trim());
+                
+                if (foundProduct) {
+                    window.addToCart(foundProduct.id);
+                    window.showToast(`${foundProduct.name} ajouté !`, "success");
+                    if (navigator.vibrate) navigator.vibrate([100, 50, 100]); // Vibration de confirmation
+                } else {
+                    window.showToast("Ce code-barres n'est pas dans le catalogue.", "error");
+                    if (navigator.vibrate) navigator.vibrate(200); // Grosse vibration d'erreur
+                }
+                
+            }).catch(err => {
+                console.warn("Erreur scanner:", err);
+            });
+        };
+
+        window.stopScanner = () => {
+            if(html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                    document.getElementById('scanner-modal').classList.add('hidden');
+                }).catch(err => {
+                    document.getElementById('scanner-modal').classList.add('hidden');
+                });
+            } else {
+                document.getElementById('scanner-modal').classList.add('hidden');
+            }
+        };
+
+
+        window.addToCart = (productId) => {
+            const product = products.find(p => p.id === productId);
+            if (!product || product.stock <= 0) return window.showToast("Rupture de stock !", "error");
+
+            const existingItem = cart.find(item => item.id === productId);
+            if (existingItem) {
+                if (existingItem.qty < product.stock) {
+                    existingItem.qty += 1;
+                } else {
+                    return window.showToast("Stock maximum atteint", "warning");
+                }
+            } else {
+                cart.push({ ...product, qty: 1 });
+            }
+            updateCartUI();
+            if (navigator.vibrate) navigator.vibrate(20);
+        };
+
+        window.changeQty = (id, delta) => {
+            const item = cart.find(i => i.id === id);
+            const product = products.find(p => p.id === id);
+            if(item && product) {
+                if (delta > 0 && item.qty >= product.stock) return window.showToast("Stock insuffisant", "warning");
+                item.qty += delta;
+                if(item.qty <= 0) cart = cart.filter(i => i.id !== id);
+                updateCartUI();
+            }
+        };
+
+        window.removeFromCart = (id) => {
+            cart = cart.filter(i => i.id !== id);
+            updateCartUI();
+        };
+
+        window.cancelCart = () => {
+            if(cart.length > 0 && confirm("Annuler la vente en cours ?")) {
+                cart = []; 
+                document.getElementById('discount-input').value = 0; 
+                updateCartUI();
+                window.showToast("Panier vidé", "warning");
+            }
+        };
+
+        function updateCartUI() {
+            const list = document.getElementById('cart-items');
+            list.innerHTML = '';
+            subTotalGlobal = 0;
+            
+            if (cart.length === 0) {
+                list.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-muted); font-size:0.9rem;"><i class="fas fa-shopping-basket" style="font-size:2rem; opacity:0.3; margin-bottom:10px; display:block;"></i> Scannez ou sélectionnez un article</div>`;
+            } else {
+                cart.forEach(item => {
+                    const lineTotal = item.price * item.qty;
+                    subTotalGlobal += lineTotal;
+                    list.innerHTML += `
+                        <li class="cart-item">
+                            <span class="item-name">${item.name}</span>
+                            <div class="qty-controls">
+                                <button class="qty-btn" onclick="window.changeQty('${item.id}', -1)"><i class="fas fa-minus" style="font-size:0.7rem;"></i></button>
+                                <span class="qty-val">${item.qty}</span>
+                                <button class="qty-btn" onclick="window.changeQty('${item.id}', 1)"><i class="fas fa-plus" style="font-size:0.7rem;"></i></button>
+                            </div>
+                            <span class="item-price">${formatMoney(lineTotal)}</span>
+                            <button class="btn-icon btn-remove" onclick="window.removeFromCart('${item.id}')"><i class="fas fa-times-circle"></i></button>
+                        </li>
+                    `;
+                });
+            }
+            
+            document.getElementById('sub-total').innerText = formatMoney(subTotalGlobal);
+            discount = parseInt(document.getElementById('discount-input').value) || 0;
+            const discountAmount = (subTotalGlobal * discount) / 100;
+            grandTotal = subTotalGlobal - discountAmount;
+            
+            document.getElementById('total-price').innerText = formatMoney(grandTotal);
+        }
+
+        document.getElementById('discount-input').addEventListener('input', updateCartUI);
+
+        window.openPaymentModal = () => {
+            if(cart.length === 0) return window.showToast("Le panier est vide !", "warning");
+            document.getElementById('modal-total').innerText = formatMoney(grandTotal);
+            document.getElementById('cash-received').value = '';
+            document.getElementById('change-amount').innerText = '0 F';
+            
+            const btnConfirm = document.getElementById('confirm-pay-btn');
+            btnConfirm.disabled = selectedPaymentMethod === 'Espèces';
+            
+            document.getElementById('payment-modal').classList.remove('hidden');
+            
+            if(selectedPaymentMethod === 'Espèces') {
+                setTimeout(() => document.getElementById('cash-received').focus(), 300);
+            }
+        };
+
+        window.closePaymentModal = () => document.getElementById('payment-modal').classList.add('hidden');
+
+        window.setPaymentMethod = (btn, method) => {
+            document.querySelectorAll('.pay-method').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedPaymentMethod = method;
+            
+            const calcSection = document.getElementById('cash-calc-section');
+            const btnConfirm = document.getElementById('confirm-pay-btn');
+            
+            if(method === 'Espèces') {
+                calcSection.style.display = 'block';
+                btnConfirm.disabled = true;
+                const inputCash = document.getElementById('cash-received');
+                inputCash.dispatchEvent(new Event('input'));
+                inputCash.focus();
+            } else {
+                calcSection.style.display = 'none';
+                btnConfirm.disabled = false;
+            }
+        };
+
+        window.setQuickCash = (amount) => {
+            const input = document.getElementById('cash-received');
+            input.value = amount;
+            input.dispatchEvent(new Event('input'));
+        };
+        window.setExactAmount = () => {
+            const input = document.getElementById('cash-received');
+            input.value = grandTotal;
+            input.dispatchEvent(new Event('input'));
+        };
+
+        document.getElementById('cash-received').addEventListener('input', (e) => {
+            if (selectedPaymentMethod !== 'Espèces') return;
+            const received = parseInt(e.target.value) || 0;
+            const change = received - grandTotal;
+            const changeEl = document.getElementById('change-amount');
+            const btn = document.getElementById('confirm-pay-btn');
+            
+            if(change >= 0) {
+                changeEl.innerText = formatMoney(change); 
+                changeEl.style.color = 'var(--success)';
+                btn.disabled = false;
+            } else {
+                changeEl.innerText = "Insuffisant"; 
+                changeEl.style.color = 'var(--danger)';
+                btn.disabled = true;
+            }
+        });
+
+        window.processTransaction = async () => {
+            const btn = document.getElementById('confirm-pay-btn');
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> TRAITEMENT...';
+            btn.disabled = true;
+
+            try {
+                const select = document.getElementById('client-select');
+                const clientId = select.value;
+                const clientName = select.options[select.selectedIndex].text;
+                const received = parseInt(document.getElementById('cash-received').value) || grandTotal;
+                const change = received - grandTotal;
+
+                // IMPORTANT : Intégration du prix d'achat lors de la sauvegarde de la transaction
+                await addDoc(collection(db, "transactions"), {
+                    date: serverTimestamp(),
+                    caissier: "Adama D. Gnoumou",
+                    client: { id: clientId, nom: clientName },
+                    articles: cart.map(item => ({ 
+                        id: item.id, 
+                        nom: item.name, 
+                        qte: item.qty, 
+                        prixUnitaire: item.price,
+                        prixAchat: item.purchasePrice || 0 // Ajout pour calcul du bénéfice
+                    })),
+                    sousTotal: subTotalGlobal,
+                    remisePourcentage: discount,
+                    remiseMontant: subTotalGlobal - grandTotal,
+                    totalPaye: grandTotal,
+                    methodePaiement: selectedPaymentMethod,
+                    especeRecue: received,
+                    monnaieRendue: change > 0 ? change : 0
+                });
+
+                for (const item of cart) {
+                    await updateDoc(doc(db, "products", item.id), { stock: increment(-item.qty) });
+                }
+
+                window.showToast("Transaction validée avec succès !");
+                
+                generateReceipt(clientName, received, change);
+                window.print();
+                
+                cart = [];
+                document.getElementById('discount-input').value = 0;
+                await initData(); 
+                updateCartUI();
+                window.closePaymentModal();
+
+            } catch (error) {
+                console.error(error);
+                window.showToast("Erreur système lors de la vente", "error");
+            } finally {
+                btn.innerHTML = '<i class="fas fa-print"></i> VALIDER ET IMPRIMER LE TICKET';
+                btn.disabled = false;
+            }
+        };
+
+        function generateReceipt(clientName, received, change) {
+            const receiptDiv = document.getElementById('printable-receipt');
+            const date = new Date().toLocaleString('fr-FR');
+            
+            let itemsHtml = '';
+            cart.forEach(item => {
+                itemsHtml += `
+                <tr>
+                    <td>${item.name}</td>
+                    <td class="col-qty">${item.qty}</td>
+                    <td class="col-price">${formatMoney(item.price * item.qty)}</td>
+                </tr>`;
+            });
+
+            receiptDiv.innerHTML = `
+                <div class="receipt-header">
+                    <h2>${storeInfo.name}</h2>
+                    <p>${storeInfo.address || ''}</p>
+                    <p>Tel: ${storeInfo.phone || ''}</p>
+                    <div class="divider"></div>
+                    <p>Date: ${date}</p>
+                    <p>Caissier: Adama D. Gnoumou</p>
+                    <p>Client: ${clientName}</p>
+                </div>
+                <div class="divider"></div>
+                <table class="receipt-table">
+                    <thead><tr><th>ARTICLE</th><th class="col-qty">QTÉ</th><th class="col-price">TOTAL</th></tr></thead>
+                    <tbody>${itemsHtml}</tbody>
+                </table>
+                <div class="divider"></div>
+                <div class="receipt-totals">
+                    <div class="line"><span>Sous-total:</span><span>${formatMoney(subTotalGlobal)}</span></div>
+                    ${discount > 0 ? `<div class="line"><span>Remise (${discount}%):</span><span>-${formatMoney(subTotalGlobal - grandTotal)}</span></div>` : ''}
+                    <div class="line bold"><span>NET À PAYER:</span><span>${formatMoney(grandTotal)}</span></div>
+                </div>
+                <div class="divider"></div>
+                <div class="receipt-totals">
+                    <div class="line"><span>Paiement:</span><span>${selectedPaymentMethod}</span></div>
+                    ${selectedPaymentMethod === 'Espèces' ? `
+                    <div class="line"><span>Espèces reçues:</span><span>${formatMoney(received)}</span></div>
+                    <div class="line"><span>Monnaie rendue:</span><span>${formatMoney(change)}</span></div>` : ''}
+                </div>
+                <div class="receipt-footer">
+                    <div class="divider"></div>
+                    <p>${storeInfo.receiptMessage.replace(/\n/g, '<br>')}</p>
+                </div>
+            `;
+        }
+
+        window.toggleFullScreen = () => {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+            else if (document.exitFullscreen) document.exitFullscreen();
+        };
+
+        updateCartUI(); 
+        initData();
+
+    </script>
+</body>
+</html>

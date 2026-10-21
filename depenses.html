@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roger Service Pro - Gestion des Dépenses</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- DESIGN SYSTEM PREMIUM --- */
+        :root {
+            --primary: #4f46e5; 
+            --primary-hover: #4338ca;
+            --secondary: #0f172a; 
+            --secondary-light: #1e293b;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --success-hover: #059669;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --border: #e2e8f0;
+            
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --radius-md: 10px;
+            --radius-lg: 16px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        
+        /* GESTION DE L'ÉCRAN (Empêche le menu de disparaître) */
+        body { 
+            display: flex; 
+            height: 100vh; 
+            width: 100vw;
+            background-color: var(--background); 
+            color: var(--text-main); 
+            overflow: hidden; 
+            -webkit-font-smoothing: antialiased; 
+        }
+        
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 20px; }
+
+        button { cursor: pointer; border: none; outline: none; font-weight: 600; transition: all 0.2s ease; }
+        .btn-icon { background: none; font-size: 1.2rem; color: var(--text-muted); padding: 8px; border-radius: 50%; }
+        .btn-icon:hover { color: var(--primary); background: #eff6ff; }
+        
+        /* --- SIDEBAR PREMIUM (VERROUILLÉE) --- */
+        .sidebar { 
+            width: 250px; 
+            min-width: 250px; 
+            flex-shrink: 0;   
+            background: linear-gradient(180deg, var(--secondary) 0%, var(--secondary-light) 100%); 
+            color: white; 
+            display: flex !important; 
+            flex-direction: column; 
+            padding: 2rem 1.2rem; 
+            z-index: 10; 
+            box-shadow: 4px 0 15px rgba(0,0,0,0.05); 
+            overflow-y: auto; 
+        }
+        .brand h2 { font-size: 1.3rem; font-weight: 800; display: flex; align-items: center; gap: 12px; margin-bottom: 3rem; letter-spacing: -0.5px; }
+        .brand h2 i { color: #818cf8; font-size: 1.5rem; }
+        .nav-links { list-style: none; flex: 1; display: flex; flex-direction: column; gap: 5px; }
+        .nav-links li { padding: 0.9rem 1.2rem; border-radius: var(--radius-md); display: flex; align-items: center; gap: 15px; color: #94a3b8; cursor: pointer; transition: 0.3s; font-weight: 500; font-size: 0.9rem; }
+        .nav-links li i { font-size: 1.1rem; width: 20px; text-align: center; }
+        .nav-links li:hover { background-color: rgba(255,255,255,0.05); color: white; }
+        .nav-links li.active { background-color: var(--primary); color: white; box-shadow: var(--shadow-md); }
+        .user-info { display: flex; align-items: center; gap: 12px; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.9rem; color: #e2e8f0; font-weight: 500; margin-top: 1rem; }
+        .user-info i { font-size: 1.8rem; color: #818cf8; }
+        
+        /* Style de la photo de profil administrateur */
+        .admin-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #818cf8;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            background-color: #fff;
+        }
+
+        /* --- MAIN CONTENT & HEADER --- */
+        .main-content { 
+            flex: 1; 
+            min-width: 0; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            position: relative; 
+            overflow-x: auto;
+        }
+        .top-header { background: var(--surface); padding: 1.2rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); box-shadow: var(--shadow-sm); z-index: 10; }
+        .datetime { font-weight: 600; color: var(--text-muted); font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+        
+        /* LOADER PREMIUM */
+        #global-loader { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.95); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; backdrop-filter: blur(5px); }
+        .loader-brand { font-size: 1.5rem; font-weight: 800; color: var(--secondary); letter-spacing: -0.5px; margin-bottom: 10px; }
+        .spinner { border: 4px solid var(--border); border-top: 4px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+        .loader-text { font-weight: 600; color: var(--text-muted); font-size: 1rem; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hidden { display: none !important; opacity: 0; pointer-events: none; }
+
+        /* --- PAGE STYLES --- */
+        .page-container { padding: 2rem; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 1.5rem; min-width: 800px; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+        .page-title { font-size: 1.8rem; font-weight: 800; color: var(--secondary); letter-spacing: -0.5px; }
+        
+        .header-actions { display: flex; gap: 12px; }
+        .btn-export { background: var(--secondary-light); color: white; padding: 0.8rem 1.5rem; border-radius: var(--radius-md); font-weight: 700; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-sm); transition: 0.2s; }
+        .btn-export:hover { background: var(--secondary); transform: translateY(-1px); }
+        .btn-add { background: var(--danger); color: white; padding: 0.8rem 1.5rem; border-radius: var(--radius-md); font-weight: 700; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-sm); transition: 0.2s; }
+        .btn-add:hover { background: #dc2626; transform: translateY(-1px); }
+
+        /* KPIS & ANALYTICS */
+        .kpi-row { display: flex; gap: 1.5rem; align-items: stretch; }
+        
+        .kpi-card { background: var(--surface); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: var(--shadow-md); display: flex; align-items: center; gap: 20px; flex: 1; position: relative; overflow: hidden; }
+        .kpi-card::after { content: ''; position: absolute; top: 0; left: 0; width: 6px; height: 100%; background: var(--danger); }
+        .kpi-icon { width: 60px; height: 60px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; background: #fef2f2; color: var(--danger); }
+        .kpi-info p { font-size: 0.9rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+        .kpi-info h3 { font-size: 2rem; color: var(--secondary); font-weight: 900; margin: 0; letter-spacing: -0.5px; }
+
+        /* BARRE DE RÉPARTITION VISUELLE (NOUVEAU) */
+        .breakdown-card { background: var(--surface); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: var(--shadow-sm); flex: 2; display: flex; flex-direction: column; justify-content: center; }
+        .breakdown-title { font-size: 0.85rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 15px; letter-spacing: 0.5px; }
+        .progress-bar-wrapper { width: 100%; height: 20px; background: #e2e8f0; border-radius: 10px; display: flex; overflow: hidden; margin-bottom: 12px; }
+        .progress-segment { height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: white; font-weight: bold; transition: width 0.5s ease; }
+        .progress-legend { display: flex; flex-wrap: wrap; gap: 15px; font-size: 0.8rem; font-weight: 600; color: var(--text-main); }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+        /* Couleurs Catégories */
+        .color-loyer { background-color: #f59e0b; } /* Orange */
+        .color-salaires { background-color: #3b82f6; } /* Bleu */
+        .color-appro { background-color: #10b981; } /* Vert */
+        .color-energie { background-color: #0ea5e9; } /* Cyan */
+        .color-divers { background-color: #8b5cf6; } /* Violet */
+
+        /* BARRE DE FILTRES INDUSTRIELS */
+        .toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; background: var(--surface); padding: 1.2rem 1.5rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border); gap: 15px; }
+        
+        .quick-filters { display: flex; gap: 8px; flex-wrap: wrap; }
+        .filter-btn { padding: 0.6rem 1.2rem; background: var(--background); border: 1px solid var(--border); border-radius: 20px; font-size: 0.9rem; font-weight: 600; color: var(--text-muted); transition: 0.2s; }
+        .filter-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: var(--shadow-sm); }
+
+        .date-filter { display: flex; gap: 10px; align-items: center; }
+        .date-filter label { font-weight: 700; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; }
+        .date-input { padding: 0.6rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-md); outline: none; color: var(--text-main); font-weight: 500; font-size: 0.9rem; }
+        .date-input:focus { border-color: var(--primary); }
+        .btn-custom-filter { background: var(--secondary); color: white; padding: 0.6rem 1.2rem; border-radius: var(--radius-md); font-weight: 700; transition: 0.2s; }
+        .btn-custom-filter:hover { background: var(--secondary-light); }
+
+        /* TABLE */
+        .table-container { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); border: 1px solid var(--border); overflow: hidden; margin-top: 5px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        thead { background: #f8fafc; border-bottom: 2px solid var(--border); }
+        th { padding: 1.2rem 1.5rem; font-weight: 700; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); font-size: 0.95rem; vertical-align: middle; transition: background 0.2s; }
+        tbody tr:hover td { background: #f8fafc; }
+
+        .expense-title { font-weight: 800; color: var(--secondary); display: block; font-size: 1.05rem; }
+        .expense-date { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
+        
+        .badge-cat { padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-block; letter-spacing: 0.5px; color: white; }
+
+        .amount-cell { font-weight: 800; color: var(--danger); font-size: 1.15rem; }
+
+        .action-btns { display: flex; gap: 8px; justify-content: flex-end; }
+        .btn-action-sm { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: 0.2s; border: 1px solid transparent; }
+        .btn-delete { color: var(--danger); background: #fee2e2; } .btn-delete:hover { background: #fca5a5; color: white; }
+
+        /* ÉTAT VIDE */
+        .empty-state { padding: 5rem 2rem; text-align: center; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        .empty-state i { font-size: 4rem; color: #cbd5e1; margin-bottom: 10px; }
+        .empty-state h3 { font-size: 1.5rem; color: var(--secondary); font-weight: 700; }
+        .empty-state p { font-size: 1rem; max-width: 450px; line-height: 1.5; margin-bottom: 10px; }
+        .empty-state .btn-add-empty { padding: 0.8rem 2rem; background: var(--danger); color: white; border-radius: var(--radius-md); font-weight: 700; transition: 0.2s; box-shadow: var(--shadow-sm); }
+        .empty-state .btn-add-empty:hover { background: #dc2626; transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+        /* MODAL */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 1; transition: 0.3s; backdrop-filter: blur(5px); }
+        .modal-content { background: var(--surface); width: 500px; border-radius: var(--radius-lg); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); transform: scale(1); transition: 0.3s; }
+        .modal.hidden { opacity: 0; pointer-events: none; }
+        .modal.hidden .modal-content { transform: scale(0.95) translateY(20px); }
+        .modal-header { padding: 1.5rem 2rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--background); }
+        .modal-header h3 { font-size: 1.3rem; font-weight: 800; color: var(--secondary); letter-spacing: -0.5px; }
+        .modal-body { padding: 2rem; display: flex; flex-direction: column; gap: 1.2rem; }
+        
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 0.85rem; font-weight: 700; color: var(--secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group input, .form-group select { padding: 0.9rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-md); outline: none; font-size: 1rem; font-weight: 500; color: var(--text-main); transition: 0.2s;}
+        .form-group input:focus, .form-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+        .form-row { display: flex; gap: 1.5rem; }
+        .form-row .form-group { flex: 1; }
+
+        .modal-footer { padding: 1.5rem 2rem; border-top: 1px solid var(--border); background: var(--background); display: flex; justify-content: flex-end; gap: 12px; }
+        .btn-cancel { padding: 0.8rem 1.5rem; background: white; border: 1px solid var(--border); border-radius: var(--radius-md); font-weight: 700; color: var(--text-muted); }
+        .btn-cancel:hover { background: #f1f5f9; color: var(--secondary); }
+        .btn-save { padding: 0.8rem 2rem; background: var(--danger); color: white; border-radius: var(--radius-md); font-weight: 700; box-shadow: var(--shadow-sm); }
+        .btn-save:hover { background: #dc2626; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+        /* TOASTS */
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; }
+        .toast { padding: 1.2rem 1.5rem; border-radius: var(--radius-md); background: white; color: var(--secondary); font-weight: 600; font-size: 0.95rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 15px; transform: translateX(120%); animation: slideIn 0.4s forwards, slideOut 0.4s forwards 3.5s; border-left: 6px solid; }
+        .toast.success { border-color: var(--success); } .toast.error { border-color: var(--danger); } .toast.warning { border-color: var(--warning); }
+        .toast i { font-size: 1.5rem; } .toast.success i { color: var(--success); } .toast.error i { color: var(--danger); } .toast.warning i { color: var(--warning); }
+        @keyframes slideIn { to { transform: translateX(0); } } @keyframes slideOut { to { transform: translateX(120%); opacity: 0; margin-top: -60px; } }
+        
+        @media (max-width: 1100px) { .kpi-row { flex-direction: column; } }
+    </style>
+</head>
+<body>
+
+    <div id="toast-container"></div>
+
+    <nav class="sidebar">
+        <div class="brand"><h2><i class="fas fa-store"></i> ROGER PRO</h2></div>
+        <ul class="nav-links">
+            <li onclick="window.location.href='index.html'"><i class="fas fa-cash-register"></i> Point de Vente</li>
+            <li onclick="window.location.href='stocks.html'"><i class="fas fa-boxes"></i> Stocks</li>
+            <li onclick="window.location.href='clients.html'"><i class="fas fa-users"></i> Clients</li>
+            <li onclick="window.location.href='rapports.html'"><i class="fas fa-chart-bar"></i> Rapports</li>
+            <li onclick="window.location.href='fournisseurs.html'"><i class="fas fa-truck"></i> Fournisseurs</li>
+            <li class="active" onclick="window.location.href='depenses.html'"><i class="fas fa-wallet"></i> Dépenses</li>
+            <li onclick="window.location.href='employes.html'"><i class="fas fa-user-shield"></i> Employés</li>
+            <li onclick="window.location.href='paie.html'"><i class="fas fa-file-invoice-dollar"></i> Paie & Salaires</li>
+            <li onclick="window.location.href='commandes.html'"><i class="fas fa-clipboard-list"></i> Commandes</li>
+            <li onclick="window.location.href='parametres.html'"><i class="fas fa-cog"></i> Paramètres</li>
+        </ul>
+        <div class="user-info">
+            <!-- Remplacement de l'icône par l'image de profil -->
+            <img src="https://i.imgur.com/zbAQtQX.jpeg" alt="Adama D. Gnoumou" class="admin-avatar">
+            <div>
+                <span style="display:block; font-size:0.75rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px;">Administrateur</span>
+                <span style="font-weight:700; color:white; font-size:1rem;">Adama D. Gnoumou</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div id="global-loader">
+            <div class="spinner"></div>
+            <div class="loader-brand">DATIEN & FILS FINANCES</div>
+            <span class="loader-text">Chargement du livre des charges...</span>
+        </div>
+
+        <header class="top-header">
+            <div class="datetime" id="current-datetime"><i class="far fa-clock"></i> <span>Chargement...</span></div>
+            <div class="top-actions">
+                <button class="btn-icon" title="Plein écran" onclick="window.toggleFullScreen()"><i class="fas fa-expand"></i></button>
+            </div>
+        </header>
+
+        <div class="page-container">
+            <div class="page-header">
+                <h1 class="page-title">Livre des Dépenses & Charges</h1>
+                <div class="header-actions">
+                    <button class="btn-export" onclick="window.exportToCSV()"><i class="fas fa-file-csv"></i> Exporter le Journal (CSV)</button>
+                    <button class="btn-add" onclick="window.openExpenseModal()"><i class="fas fa-minus-circle"></i> Saisir une Charge</button>
+                </div>
+            </div>
+
+            <!-- FILTRES TEMPORELS INDUSTRIELS -->
+            <div class="toolbar" style="margin-bottom: 5px;">
+                <div class="quick-filters">
+                    <button class="filter-btn active" onclick="window.applyQuickFilter('all', this)">Toutes dates</button>
+                    <button class="filter-btn" onclick="window.applyQuickFilter('today', this)">Aujourd'hui</button>
+                    <button class="filter-btn" onclick="window.applyQuickFilter('week', this)">Cette Semaine</button>
+                    <button class="filter-btn" onclick="window.applyQuickFilter('month', this)">Ce Mois-ci</button>
+                    <button class="filter-btn" onclick="window.applyQuickFilter('year', this)">Cette Année</button>
+                </div>
+
+                <div class="date-filter">
+                    <label>Période perso :</label>
+                    <input type="date" id="date-start" class="date-input">
+                    <span style="color:var(--text-muted);font-weight:bold;">-</span>
+                    <input type="date" id="date-end" class="date-input">
+                    <button class="btn-custom-filter" onclick="window.filterByCustomDate()"><i class="fas fa-filter"></i> Filtrer</button>
+                </div>
+            </div>
+
+            <!-- KPIs & RÉPARTITION VISUELLE -->
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-icon"><i class="fas fa-coins"></i></div>
+                    <div class="kpi-info">
+                        <p>Total des Charges (Sur la période)</p>
+                        <h3 id="kpi-total">0 F</h3>
+                    </div>
+                </div>
+                
+                <div class="breakdown-card">
+                    <div class="breakdown-title">Répartition Budgétaire de la Période</div>
+                    <div class="progress-bar-wrapper" id="progress-bar-container">
+                        <!-- Segments injectés via JS -->
+                    </div>
+                    <div class="progress-legend" id="progress-legend-container">
+                        <!-- Légende injectée via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container" id="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date & Motif du Décaissement</th>
+                            <th>Imputation Comptable</th>
+                            <th>Montant Décaissé</th>
+                            <th>Auteur / Responsable</th>
+                            <th style="width: 80px; text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expenses-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL DÉPENSE -->
+    <div id="expense-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Saisir un Décaissement</h3>
+                <button class="btn-icon" onclick="window.closeExpenseModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="expense-form" onsubmit="window.saveExpense(event)">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Motif / Libellé de la dépense *</label>
+                        <input type="text" id="exp-title" required placeholder="Ex: Facture électricité SONABEL">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Montant (FCFA) *</label>
+                            <input type="number" id="exp-amount" required min="1" placeholder="Ex: 15000">
+                        </div>
+                        <div class="form-group">
+                            <label>Catégorie (Imputation) *</label>
+                            <select id="exp-category" required>
+                                <option value="Loyer">Loyer & Baux</option>
+                                <option value="Énergie">Énergie & Eau</option>
+                                <option value="Transport">Transport & Logistique</option>
+                                <option value="Approvisionnement">Approvisionnement Stock</option>
+                                <option value="Salaires">Salaires & Primes</option>
+                                <option value="Entretien">Entretien & Réparations</option>
+                                <option value="Divers">Divers / Autre</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="window.closeExpenseModal()">Annuler</button>
+                    <button type="submit" class="btn-save" id="btn-save-exp">Enregistrer la charge</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCRIPT FIREBASE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, doc, deleteDoc, serverTimestamp, orderBy, query } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOExj8-x4KjGIQi2ewzU7LQP302l9pZrU",
+            authDomain: "atlasgroupebusiness.firebaseapp.com",
+            databaseURL: "https://atlasgroupebusiness-default-rtdb.firebaseio.com",
+            projectId: "atlasgroupebusiness",
+            storageBucket: "atlasgroupebusiness.firebasestorage.app",
+            messagingSenderId: "876963848028",
+            appId: "1:876963848028:web:89a37065ded7b60c1c6b99"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app, "roger-db");
+
+        let allExpenses = [];
+        let currentlyDisplayedExpenses = [];
+
+        const formatMoney = (amount) => new Intl.NumberFormat('fr-FR').format(amount || 0) + ' F';
+
+        // Cartographie des couleurs pour l'analyse visuelle
+        const catColors = {
+            "Loyer": "color-loyer",
+            "Énergie": "color-energie",
+            "Approvisionnement": "color-appro",
+            "Salaires": "color-salaires",
+            "Transport": "color-divers",
+            "Entretien": "color-divers",
+            "Divers": "color-divers"
+        };
+
+        window.showToast = (msg, type = 'success') => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icon = type === 'error' ? 'fa-exclamation-circle' : type === 'warning' ? 'fa-exclamation-triangle' : 'fa-check-circle';
+            toast.innerHTML = `<i class="fas ${icon}"></i> <span>${msg}</span>`;
+            container.appendChild(toast);
+            if(navigator.vibrate) navigator.vibrate(50);
+            setTimeout(() => { if(toast.parentElement) toast.remove(); }, 3500);
+        };
+
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('current-datetime').innerHTML = `<i class="far fa-clock"></i> <span>${now.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>`;
+        }, 1000);
+
+        async function initData() {
+            try {
+                const q = query(collection(db, "expenses"), orderBy("date", "desc"));
+                const snapshot = await getDocs(q);
+                allExpenses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // Par défaut, afficher tout
+                window.applyQuickFilter('all', document.querySelector('.filter-btn.active'));
+                
+                setTimeout(() => document.getElementById('global-loader').classList.add('hidden'), 400);
+            } catch (error) {
+                console.error(error);
+                window.showToast("Erreur de chargement du serveur", "error");
+            }
+        }
+
+        // MOTEUR DE FILTRAGE TEMPOREL
+        window.applyQuickFilter = (period, btnElement) => {
+            if(btnElement) {
+                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                btnElement.classList.add('active');
+            }
+            
+            document.getElementById('date-start').value = '';
+            document.getElementById('date-end').value = '';
+
+            const now = new Date();
+            let start, end;
+
+            switch(period) {
+                case 'today':
+                    start = new Date(now.setHours(0,0,0,0));
+                    end = new Date(now.setHours(23,59,59,999));
+                    break;
+                case 'week':
+                    const firstDayOfWeek = now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1);
+                    start = new Date(now.setDate(firstDayOfWeek));
+                    start.setHours(0,0,0,0);
+                    end = new Date(start);
+                    end.setDate(end.getDate() + 6);
+                    end.setHours(23,59,59,999);
+                    break;
+                case 'month':
+                    start = new Date(now.getFullYear(), now.getMonth(), 1);
+                    end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23,59,59,999);
+                    break;
+                case 'year':
+                    start = new Date(now.getFullYear(), 0, 1);
+                    end = new Date(now.getFullYear(), 11, 31, 23,59,59,999);
+                    break;
+                case 'all':
+                default:
+                    start = new Date(2000, 0, 1);
+                    end = new Date(2100, 0, 1);
+                    break;
+            }
+
+            executeFilter(start, end);
+        };
+
+        window.filterByCustomDate = () => {
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            
+            const startStr = document.getElementById('date-start').value;
+            const endStr = document.getElementById('date-end').value;
+
+            if (!startStr || !endStr) return window.showToast("Veuillez sélectionner une période complète.", "error");
+
+            const start = new Date(startStr); start.setHours(0, 0, 0, 0);
+            const end = new Date(endStr); end.setHours(23, 59, 59, 999);
+
+            executeFilter(start, end);
+        };
+
+        function executeFilter(start, end) {
+            currentlyDisplayedExpenses = allExpenses.filter(e => {
+                if (!e.date) return false;
+                const eDate = e.date.toDate ? e.date.toDate() : new Date(e.date);
+                return eDate >= start && eDate <= end;
+            });
+            renderTable(currentlyDisplayedExpenses);
+        }
+
+        // AFFICHAGE TABLEAU & ANALYTIQUE
+        function renderTable(expensesData) {
+            const tableWrapper = document.getElementById('table-wrapper');
+            
+            let totalExpenses = 0;
+            let breakdown = { "Loyer": 0, "Énergie": 0, "Approvisionnement": 0, "Salaires": 0, "Divers": 0 };
+
+            expensesData.forEach(e => {
+                const amount = e.amount || 0;
+                totalExpenses += amount;
+                
+                // Groupement pour la répartition
+                if(e.category.includes('Loyer')) breakdown["Loyer"] += amount;
+                else if(e.category.includes('Énergie')) breakdown["Énergie"] += amount;
+                else if(e.category.includes('Appro')) breakdown["Approvisionnement"] += amount;
+                else if(e.category.includes('Salaire') || e.category.includes('Prime')) breakdown["Salaires"] += amount;
+                else breakdown["Divers"] += amount;
+            });
+
+            document.getElementById('kpi-total').innerText = formatMoney(totalExpenses);
+
+            // GESTION BARRE DE PROGRESSION VISUELLE
+            const barContainer = document.getElementById('progress-bar-container');
+            const legendContainer = document.getElementById('progress-legend-container');
+            barContainer.innerHTML = '';
+            legendContainer.innerHTML = '';
+
+            if(totalExpenses > 0) {
+                for (const [cat, val] of Object.entries(breakdown)) {
+                    if (val > 0) {
+                        const percent = ((val / totalExpenses) * 100).toFixed(1);
+                        const colorClass = catColors[cat];
+                        
+                        barContainer.innerHTML += `<div class="progress-segment ${colorClass}" style="width: ${percent}%;" title="${cat}: ${percent}%"></div>`;
+                        legendContainer.innerHTML += `<div class="legend-item"><div class="legend-dot ${colorClass}"></div><span>${cat} (${percent}%)</span></div>`;
+                    }
+                }
+            } else {
+                barContainer.innerHTML = `<div style="width:100%; text-align:center; font-size:0.8rem; color:var(--text-muted); line-height:20px;">Aucune donnée sur la période</div>`;
+            }
+
+            // GESTION ÉTAT VIDE TABLEAU
+            if (expensesData.length === 0) {
+                tableWrapper.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        <h3>Aucune charge enregistrée</h3>
+                        <p>Aucun décaissement n'a été effectué durant la période sélectionnée.</p>
+                        <button class="btn-add-empty" onclick="window.openExpenseModal()"><i class="fas fa-plus"></i> Saisir la première dépense</button>
+                    </div>
+                `;
+                return;
+            }
+
+            if (!document.querySelector('table')) {
+                tableWrapper.innerHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date & Motif du Décaissement</th>
+                                <th>Imputation Comptable</th>
+                                <th>Montant Décaissé</th>
+                                <th>Auteur / Responsable</th>
+                                <th style="width: 80px; text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expenses-table-body"></tbody>
+                    </table>
+                `;
+            }
+
+            const tbody = document.getElementById('expenses-table-body');
+            tbody.innerHTML = '';
+
+            expensesData.forEach(e => {
+                const dateStr = e.date && e.date.toDate ? e.date.toDate().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Récemment';
+                
+                // Catégorisation visuelle Premium
+                let badgeClass = 'cat-default';
+                if(e.category.includes('Loyer')) badgeClass = catColors['Loyer'];
+                else if(e.category.includes('Salaires') || e.category.includes('Prime')) badgeClass = catColors['Salaires'];
+                else if(e.category.includes('Appro')) badgeClass = catColors['Approvisionnement'];
+                else if(e.category.includes('Énergie')) badgeClass = catColors['Énergie'];
+                else badgeClass = catColors['Divers'];
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>
+                            <span class="expense-title">${e.title}</span>
+                            <span class="expense-date">${dateStr}</span>
+                        </td>
+                        <td><span class="badge-cat ${badgeClass}">${e.category}</span></td>
+                        <td class="amount-cell">-${formatMoney(e.amount)}</td>
+                        <td style="color:var(--text-muted); font-size:0.9rem; font-weight:500;">${e.author || 'Admin'}</td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn-action-sm btn-delete" title="Supprimer la charge" onclick="window.deleteExpense('${e.id}', '${e.title.replace(/'/g, "\\'")}')"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // EXPORT CSV COMPTABLE
+        window.exportToCSV = () => {
+            if(currentlyDisplayedExpenses.length === 0) return window.showToast("Aucune donnée à exporter.", "error");
+
+            let csvContent = "Date,Motif de la depense,Categorie,Montant Decaisse,Auteur\n";
+            
+            currentlyDisplayedExpenses.forEach(e => {
+                const dateStr = e.date && e.date.toDate ? e.date.toDate().toLocaleDateString('fr-FR').replace(',', '') : '';
+                const title = e.title ? e.title.replace(/,/g, ' ') : 'Inconnu';
+                const category = e.category || 'Non classé';
+                const amount = e.amount || 0;
+                const author = e.author || 'Admin';
+
+                csvContent += `"${dateStr}","${title}","${category}",${amount},"${author}"\n`;
+            });
+
+            const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+            const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Journal_Depenses_${new Date().toLocaleDateString('fr-FR').replace(/\//g, '-')}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            window.showToast("Journal comptable (CSV) téléchargé !");
+        };
+
+        window.openExpenseModal = () => {
+            document.getElementById('expense-form').reset();
+            document.getElementById('expense-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('exp-title').focus(), 100);
+        };
+
+        window.closeExpenseModal = () => document.getElementById('expense-modal').classList.add('hidden');
+
+        window.saveExpense = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-save-exp');
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Traitement...';
+            btn.disabled = true;
+
+            const data = {
+                title: document.getElementById('exp-title').value.trim(),
+                amount: parseInt(document.getElementById('exp-amount').value),
+                category: document.getElementById('exp-category').value,
+                author: "Adama D. Gnoumou", 
+                date: serverTimestamp()
+            };
+
+            try {
+                await addDoc(collection(db, "expenses"), data);
+                window.showToast("Charge enregistrée en comptabilité !");
+                window.closeExpenseModal();
+                initData(); 
+            } catch (err) {
+                window.showToast("Erreur lors de l'enregistrement", "error");
+            } finally {
+                btn.innerHTML = 'Enregistrer la charge';
+                btn.disabled = false;
+            }
+        };
+
+        window.deleteExpense = async (id, title) => {
+            if(confirm(`⚠️ Supprimer définitivement la charge "${title}" du livre comptable ?\nCette action modifiera vos bilans.`)) {
+                try {
+                    await deleteDoc(doc(db, "expenses", id));
+                    window.showToast("Dépense annulée", "warning");
+                    initData();
+                } catch(err) {
+                    window.showToast("Échec de la suppression", "error");
+                }
+            }
+        };
+
+        window.toggleFullScreen = () => {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+            else if (document.exitFullscreen) document.exitFullscreen();
+        };
+
+        initData();
+    </script>
+</body>
+</html>
